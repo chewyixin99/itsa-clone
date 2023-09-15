@@ -14,9 +14,6 @@ const Navbar = () => {
         <Link className="px-3 hover:underline" to={"/login"}>
           Login
         </Link>
-        <Link className="px-3 hover:underline" to={"/sign-up"}>
-          Sign up
-        </Link>
       </div>
     </div>
   );
