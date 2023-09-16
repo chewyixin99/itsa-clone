@@ -22,5 +22,20 @@
 }
 
 @layer components {
-
+    .custom-button {
+        @apply
+        border rounded-lg uppercase
+    }
+    .custom-form-field {
+        @apply
+        border p-3 rounded-md w-full my-3
+    }
+    .custom-gray-text {
+        @apply
+        text-gray-400
+    }
+    .custom-basic-link {
+        @apply
+        text-blue-600 hover:underline
+    }
 }
