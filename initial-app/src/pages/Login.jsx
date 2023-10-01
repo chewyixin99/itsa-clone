@@ -48,9 +48,12 @@ const Login = () => {
       setErrorMsg("");
       setTimeout(() => {
         setLoading(false);
-        navigate("/home", {
+        navigate("/login", {
           replace: true,
         });
+        setUsername("");
+        setPassword("");
+        alert("Registration success");
       }, 1000);
     } else {
       if (!validUser) {
