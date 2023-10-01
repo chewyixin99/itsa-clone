@@ -1,38 +1,71 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiExternalLink } from "react-icons/fi";
+import {
+  validateLoginPassword,
+  validateLoginUsername,
+  validateRegisterPassword,
+  validateRegisterUsername,
+} from "../lib/loginUtil";
 
 const Login = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const onLoginClick = (e) => {
     e.preventDefault();
     console.log(
       `login clicked, username is ${username}, password is ${password}`
     );
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/", {
-        replace: true,
-      });
-    }, 3000);
+    const validUser = validateLoginUsername(username);
+    const validPassword = validateLoginPassword(username, password);
+    if (validUser && validPassword) {
+      setLoading(true);
+      setErrorMsg("");
+      setTimeout(() => {
+        setLoading(false);
+        navigate("/otp", {
+          replace: true,
+        });
+      }, 3000);
+    } else {
+      if (!validUser) {
+        setErrorMsg("Username does not exist");
+      } else {
+        setErrorMsg("Username or password is incorrect");
+      }
+    }
   };
+
   const onRegisterClick = (e) => {
     e.preventDefault();
     console.log(
       `register clicked, username is ${username}, password is ${password}`
     );
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/", {
-        replace: true,
-      });
-    }, 3000);
+    const validUser = validateRegisterUsername(username);
+    const validPassword = validateRegisterPassword(password);
+    console.log(validPassword);
+    if (validUser && validPassword) {
+      setLoading(true);
+      setErrorMsg("");
+      setTimeout(() => {
+        setLoading(false);
+        navigate("/home", {
+          replace: true,
+        });
+      }, 3000);
+    } else {
+      if (!validUser) {
+        setErrorMsg("Username taken");
+      } else {
+        setErrorMsg(
+          "Password must have at least 1 special character, uppercase and lowercase characters, and 1 number"
+        );
+      }
+    }
   };
   const onUsernameChange = (e) => {
     setUsername(e.target.value);
@@ -68,6 +101,7 @@ const Login = () => {
               here
             </Link>
           </div>
+          <div className="text-red-500 mb-5">{errorMsg}</div>
           <div className="text-right">
             <button
               onClick={onLoginClick}
