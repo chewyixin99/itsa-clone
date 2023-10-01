@@ -17,9 +17,6 @@ const Login = () => {
 
   const onLoginClick = (e) => {
     e.preventDefault();
-    console.log(
-      `login clicked, username is ${username}, password is ${password}`
-    );
     const validUser = validateLoginUsername(username);
     const validPassword = validateLoginPassword(username, password);
     if (validUser && validPassword) {
@@ -30,24 +27,22 @@ const Login = () => {
         navigate("/otp", {
           replace: true,
         });
-      }, 3000);
+      }, 1000);
     } else {
       if (!validUser) {
-        setErrorMsg("Username does not exist");
+        setErrorMsg("Username does not exist (user: admin, pw: admin)");
       } else {
-        setErrorMsg("Username or password is incorrect");
+        setErrorMsg(
+          "Username or password is incorrect (user: admin, pw: admin)"
+        );
       }
     }
   };
 
   const onRegisterClick = (e) => {
     e.preventDefault();
-    console.log(
-      `register clicked, username is ${username}, password is ${password}`
-    );
     const validUser = validateRegisterUsername(username);
     const validPassword = validateRegisterPassword(password);
-    console.log(validPassword);
     if (validUser && validPassword) {
       setLoading(true);
       setErrorMsg("");
@@ -56,7 +51,7 @@ const Login = () => {
         navigate("/home", {
           replace: true,
         });
-      }, 3000);
+      }, 1000);
     } else {
       if (!validUser) {
         setErrorMsg("Username taken");
@@ -105,23 +100,23 @@ const Login = () => {
           <div className="text-right">
             <button
               onClick={onLoginClick}
-              className={`custom-button p-3 mx-2 ${
-                loading ? "bg-gray-300" : "bg-[#0f385c]"
-              } text-white`}
+              className={`p-3 mx-2 ${
+                loading ? "custom-button-loading" : "custom-button-primary"
+              }`}
             >
               Log in
             </button>
             <button
               onClick={onRegisterClick}
-              className={`custom-button p-3 mx-2 ${
-                loading ? "bg-gray-300 text-white" : "bg-white text-black"
+              className={`p-3 mx-2 ${
+                loading ? "custom-button-loading" : "custom-button-secondary"
               }`}
             >
               Register
             </button>
           </div>
         </form>
-        <div className="text-center mb-5">
+        <div className="flex justify-center mb-5">
           <Link
             to="/sso-login"
             className="flex justify-center items-center custom-basic-link"

@@ -1,25 +1,36 @@
+import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { validateOTP } from "../lib/loginUtil";
 
 const OTPVerification = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    alert("OTP is 123456");
+  }, []);
 
   const handleInput = (e) => {
     e.preventDefault();
     if (loading) {
       // do not do anything
     } else {
+      setErrorMsg("");
       let tmpInput = JSON.parse(JSON.stringify(input));
       const idx = parseInt(e.target.id);
       const val = e.key;
-      console.log(`idx is ${idx}, val is ${val}`);
       if (val === "Backspace") {
         if (idx !== 0) {
           document.getElementById(`${idx - 1}`).focus();
         }
         tmpInput[idx] = "";
+      } else if (val === "ArrowLeft" && idx !== 0) {
+        document.getElementById(`${idx - 1}`).focus();
+      } else if (val === "ArrowRight" && idx !== input.length - 1) {
+        document.getElementById(`${idx + 1}`).focus();
       } else if (
         // 48 (inc) - 57 (inc), 96 inc - 105 inc
         (e.keyCode >= 48 && e.keyCode <= 57) ||
@@ -31,18 +42,32 @@ const OTPVerification = () => {
         }
       }
       if (idx === tmpInput.length - 1 && tmpInput[idx] !== "") {
-        console.log("filled");
-        setLoading(true);
-        setTimeout(() => {
-          setLoading(false);
-          navigate("/home", {
-            replace: true,
-          });
-        }, 3000);
+        const otp = tmpInput.join("");
+        const validOtp = validateOTP(otp);
+        if (validOtp) {
+          setLoading(true);
+          setTimeout(() => {
+            setLoading(false);
+            navigate("/home", {
+              replace: true,
+            });
+          }, 1000);
+        } else {
+          setErrorMsg("Invalid OTP, try again (otp hardcoded: 123456)");
+        }
       }
-      console.log(tmpInput);
       setInput(tmpInput);
     }
+  };
+
+  const onResendClick = (e) => {
+    setInput(["", "", "", "", "", ""]);
+    setLoading(true);
+    // resend logic
+    setTimeout(() => {
+      setLoading(false);
+      alert("OTP is 123456");
+    }, 1000);
   };
 
   return (
@@ -106,11 +131,13 @@ const OTPVerification = () => {
             onKeyDown={handleInput}
           />
         </div>
+        <div className="text-center mb-5 text-red-500">{errorMsg}</div>
         <div className="mb-5 text-center">
           <button
-            className={`custom-button p-3 mx-2 ${
-              loading ? "bg-gray-300" : "bg-[#0f385c]"
+            className={`p-3 mx-2 ${
+              loading ? "custom-button-loading" : "custom-button-primary"
             } text-white`}
+            onClick={onResendClick}
           >
             Resend OTP
           </button>

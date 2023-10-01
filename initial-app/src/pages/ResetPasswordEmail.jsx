@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { validateEmail } from "../lib/loginUtil";
 
 const ResetPasswordEmail = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const onEmailChange = (e) => {
     setEmail(e.target.value);
@@ -13,13 +15,19 @@ const ResetPasswordEmail = () => {
   const onSubmitClick = (e) => {
     // todo: send confirmation email with token to reset password
     e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/reset-password", {
-        replace: true,
-      });
-    }, 3000);
+    const validEmail = validateEmail(email);
+    if (validEmail) {
+      setLoading(true);
+      setTimeout(() => {
+        alert("Email sent");
+        setLoading(false);
+        navigate("/reset-password", {
+          replace: true,
+        });
+      }, 1000);
+    } else {
+      setErrorMsg("Please enter a valid email");
+    }
   };
 
   return (
@@ -42,12 +50,13 @@ const ResetPasswordEmail = () => {
             An email will be sent out to you if an account exists under the
             address that you entered.
           </div>
+          <div className="mb-5 text-center text-red-500">{errorMsg}</div>
           <div className="text-right">
             <button
               onClick={onSubmitClick}
               disabled={loading}
-              className={`custom-button p-3 mx-2 ${
-                loading ? "bg-gray-300" : "bg-[#0f385c]"
+              className={`p-3 mx-2 ${
+                loading ? "custom-button-loading" : "custom-button-primary"
               } text-white`}
             >
               {loading ? "sending..." : "send email"}

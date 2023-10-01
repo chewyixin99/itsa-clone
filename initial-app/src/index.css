@@ -22,9 +22,17 @@
 }
 
 @layer components {
-    .custom-button {
+    .custom-button-primary {
         @apply
-        border rounded-lg uppercase
+        border rounded-lg uppercase bg-[#0f385c] text-white
+    }
+    .custom-button-loading {
+        @apply
+        border rounded-lg uppercase bg-gray-300 text-white
+    }
+    .custom-button-secondary {
+        @apply
+        rounded-lg uppercase bg-white text-black hover:shadow-md
     }
     .custom-form-field {
         @apply
