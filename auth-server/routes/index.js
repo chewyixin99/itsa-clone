@@ -3,8 +3,8 @@ const router = express.Router()
 
 const auth = require('./auth')
 
-router.use('/auth', auth);
 
+router.use('/auth', auth);
 router.get('/health', (req, res) => {
     const healthcheck = {
         uptime: process.uptime(),
@@ -13,5 +13,7 @@ router.get('/health', (req, res) => {
     };
     res.send(JSON.stringify(healthcheck));
 });
+
+
 
 module.exports = router

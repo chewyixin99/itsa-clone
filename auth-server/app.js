@@ -2,17 +2,50 @@ const express = require("express");
 const router = require("./routes/index");
 const cors = require("cors")
 const app = express()
-const dbInit = require("./models/index")
+const db = require("./models/index")
+const excelToJson = require('convert-excel-to-json');
+
 
 const corsOptions = {
     origin: process.env.ORIGIN
 }
-app.use(express.urlencoded({ extended: true }));
-app.use(router)
 app.use(express.json())
+app.use(express.urlencoded({ extended: true }));
+app.use(function (req, res, next) {
+    res.header(
+        "Access-Control-Allow-Headers",
+        "x-access-token, Origin, Content-Type, Accept"
+    );
+    next();
+});
+app.use(router)
 app.use(cors(corsOptions))
 
+const initialiseUserRecords = (UserRecord) => {
+    const userRecords = excelToJson({
+        sourceFile: './data/users.xlsx',
+        header: {
+            // Is the number of rows that will be skipped and will not be present at our result object. Counting from top to bottom
+            rows: 1 // 2, 3, 4, etc.
+        }
+    }).users
+    userRecords.map((record) => {
+        console.log(record)
+        UserRecord.findOrCreate({
+            where: { email: record.B },
+            defaults: {
+                cid: record.A,
+                email: record.B,
+                first_name: record.C,
+                last_name: record.D,
+                status: record.E,
+                birthdate: String(record.F)
+            }
+        })
+    })
+}
 
+// Role.
 const initialiseRoles = (Role) => {
     Role.findOrCreate({
         where: { id: 1 },
@@ -46,9 +79,9 @@ const initialiseRoles = (Role) => {
 }
 
 const init = async () => {
-    db = await dbInit()
     await db.sequelize.sync()
-    await initialiseRoles(db.role)
+    initialiseRoles(db.role)
+    initialiseUserRecords(db.userRecord)
 }
 init()
 
