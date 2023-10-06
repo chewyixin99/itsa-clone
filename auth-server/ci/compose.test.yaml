@@ -1,0 +1,21 @@
+services:
+  # ####################################
+  # # mongo database  
+  # ####################################
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: user
+      MONGO_INITDB_ROOT_PASSWORD: pass
+
+  ##################################
+  # Jest on video service
+  ##################################
+  video-tests:
+    build:
+      context: ../
+      dockerfile: ci/Dockerfile.test
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://user:pass@localhost:27017/?retryWrites=true&w=majority
