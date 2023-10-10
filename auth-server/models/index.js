@@ -4,7 +4,7 @@ const Sequelize = require("sequelize");
 // const setUpDB = async () => {
 //     const connection = await mysql.createConnection({
 //         host: process.env.HOST,
-//         user: process.env.USERNAME,
+//         user: process.env.DBUSER,
 //         password: process.env.PASSWORD,
 //     });
 
@@ -16,7 +16,7 @@ const Sequelize = require("sequelize");
 // await setUpDB()
 const sequelize = new Sequelize(
         process.env.DATABASE,
-        process.env.USERNAME,
+        process.env.DBUSER,
         process.env.PASSWORD,
         {
             host: process.env.HOST,
