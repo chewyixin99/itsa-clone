@@ -3,9 +3,8 @@ const express = require('express');
 // const router = express.Router({ mergeParams: true });
 const router = express.Router();
 
-const { verifySignUp } = require("../middleware");
+const { verifySignUp, authJwt } = require("../middleware");
 const controller = require("../controllers/auth.controller");
-
 
 router.post(
     "/signup",
@@ -16,5 +15,8 @@ router.post(
 
 router.post("/signin", controller.signin);
 
+router.get("/userinfo",
+    authJwt.verifyToken
+    , controller.userinfo)
 
 module.exports = router;

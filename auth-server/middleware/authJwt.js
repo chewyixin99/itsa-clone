@@ -3,17 +3,20 @@ const db = require("../models");
 const User = db.user;
 const secret = process.env.TOKENSECRET
 verifyToken = (req, res, next) => {
-    let token = req.headers["x-access-token"];
+    let tokenHeader = req.headers.authorization;
 
-    if (!token) {
+    if (!tokenHeader || !tokenHeader.startsWith("Bearer ")) {
         return res.status(403).send({
             message: "No token provided!"
         });
     }
-
+    let token = tokenHeader.substring(7, tokenHeader.length)
     jwt.verify(token,
         secret,
         (err, decoded) => {
+            // if (err.name === "TokenExpiredError") {
+            // return res.status()
+            // }
             if (err) {
                 return res.status(401).send({
                     message: "Unauthorized!",

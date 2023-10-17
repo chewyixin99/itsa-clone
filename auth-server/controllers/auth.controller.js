@@ -9,7 +9,7 @@ var bcrypt = require("bcryptjs");
 
 exports.signup = (req, res) => {
     // Save User to Database
-    let cid = null
+    let sub = null
     let status = null
     console.log(req.body, "AAAAAA")
     UserRecord.findOne({
@@ -18,11 +18,11 @@ exports.signup = (req, res) => {
         }
     }).then(user => {
         if (user) {
-            cid = user.cid
+            sub = user.sub
             status = user.status
         }
         User.create({
-            cid: cid,
+            sub: sub,
             email: req.body.email,
             password: bcrypt.hashSync(req.body.password, 8),
             first_name: req.body.first_name,
@@ -76,8 +76,15 @@ exports.signin = (req, res) => {
             });
         }
 
-        const token = jwt.sign({ id: user.cid },
+        const token = jwt.sign({ id: user.sub },
             process.env.TOKENSECRET,
+            {
+                algorithm: 'HS256',
+                allowInsecureKeySizes: true,
+                expiresIn: 3600, // 1 hour
+            });
+        const refreshToken = jwt.sign({ id: user.sub },
+            process.env.REFRESHSECRET,
             {
                 algorithm: 'HS256',
                 allowInsecureKeySizes: true,
@@ -89,15 +96,47 @@ exports.signin = (req, res) => {
             for (let i = 0; i < roles.length; i++) {
                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
             }
+            res.cookie('jwt', refreshToken, {
+                httpOnly: true,
+                sameSite: 'None', secure: true,
+                maxAge: 24 * 60 * 60 * 1000
+            }); 
             res.status(200).send({
-                id: user.id,
+                sub: user.sub,
                 username: user.username,
                 email: user.email,
                 roles: authorities,
-                accessToken: token
+                accessToken: token,
             });
         });
     }).catch(err => {
         res.status(500).send({ message: err.message });
     });
 };
+
+exports.userinfo = (req, res) => {
+
+    let token = req.headers.authorization.split(" ")[1]
+    let content = jwt.decode(token)
+    console.log(content)
+    User.findOne({
+        where: {
+            sub: content.id
+        }
+    }).then(user => {
+        if (!user) {
+            return res.status(404).send({ message: "User Not found." });
+        }
+        res.send({
+            sub: user.sub,
+
+            email: user.email,
+            given_name: user.first_name,
+            family_name: user.last_name,
+            name: user.first_name + " " + user.last_name,
+            birthdate: new Date(user.birthdate),
+            // "gender": "Female",
+            // "phone_number": "+967 (103) 878-2610"
+        })
+    })
+}

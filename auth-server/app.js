@@ -30,16 +30,16 @@ const initialiseUserRecords = (UserRecord) => {
         }
     }).users
     userRecords.map((record) => {
-        console.log(record)
+        // console.log((record.F.getMonth()))
         UserRecord.findOrCreate({
             where: { email: record.B },
             defaults: {
-                cid: record.A,
+                sub: record.A,
                 email: record.B,
                 first_name: record.C,
                 last_name: record.D,
                 status: record.E,
-                birthdate: String(record.F)
+                birthdate: record.F.toISOString().split('T')[0]
             }
         })
     })

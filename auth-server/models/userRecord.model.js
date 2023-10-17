@@ -1,6 +1,6 @@
 module.exports = (sequelize, Sequelize) => {
     const UserRecord = sequelize.define("userRecords", {
-        cid: {
+        sub: {
             type: Sequelize.STRING
         },
         email: {

@@ -4,7 +4,7 @@ const router = express.Router()
 const auth = require('./auth')
 
 
-router.use('/auth', auth);
+router.use('/oauth', auth);
 router.get('/health', (req, res) => {
     const healthcheck = {
         uptime: process.uptime(),
