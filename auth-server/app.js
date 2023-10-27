@@ -7,8 +7,11 @@ const excelToJson = require('convert-excel-to-json');
 
 
 const corsOptions = {
-    origin: process.env.ORIGIN
+    // origin: process.env.ORIGIN
+    origin: "*"
 }
+app.use(cors(corsOptions))
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }));
 app.use(function (req, res, next) {
@@ -19,7 +22,7 @@ app.use(function (req, res, next) {
     next();
 });
 app.use(router)
-app.use(cors(corsOptions))
+
 
 const initialiseUserRecords = (UserRecord) => {
     const userRecords = excelToJson({

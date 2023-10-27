@@ -21,11 +21,11 @@ const Login = () => {
 
   const onLoginClick = async (e) => {
     e.preventDefault();
-    // setLoading(true);
 
     // Call BE API
     if (username && password){
       try{
+        setLoading(true);
         setErrorMsg("");
         const response = await axios.post(`${BE_URL}/oauth/signin`, { email: username, password: password })
         if (response.status === 200){
@@ -46,31 +46,55 @@ const Login = () => {
     }
   };
 
-  const onRegisterClick = (e) => {
+  const onRegisterClick = async (e) => {
     e.preventDefault();
-    const validUser = validateRegisterUsername(username);
-    const validPassword = validateRegisterPassword(password);
-    if (validUser && validPassword) {
-      setLoading(true);
-      setErrorMsg("");
-      setTimeout(() => {
-        setLoading(false);
-        navigate("/login", {
+
+    if (username && password){
+      try{
+        setLoading(true);
+        setErrorMsg("");
+        const response = await axios.post(`${BE_URL}/oauth/signup`, { email: username, password: password })
+        if (response.status === 200){ 
+          setLoading(false);
+          navigate("/login", {
           replace: true,
-        });
-        setUsername("");
-        setPassword("");
-        alert("Registration success");
-      }, 1000);
-    } else {
-      if (!validUser) {
-        setErrorMsg("Username taken");
-      } else {
-        setErrorMsg(
-          "Password must have at least 1 special character, uppercase and lowercase characters, and 1 number"
-        );
+          });
+          setUsername("");
+          setPassword("");
+          alert("Registration success");
+        } else {
+          setLoading(false);
+          setErrorMsg("Username taken");
+        }
+      } catch (error){
+        setLoading(false);
+        setErrorMsg("Password must have at least 1 special character, uppercase and lowercase characters, and 1 number");
       }
     }
+
+    // const validUser = validateRegisterUsername(username);
+    // const validPassword = validateRegisterPassword(password);
+    // if (validUser && validPassword) {
+    //   setLoading(true);
+    //   setErrorMsg("");
+    //   setTimeout(() => {
+    //     setLoading(false);
+    //     navigate("/login", {
+    //       replace: true,
+    //     });
+    //     setUsername("");
+    //     setPassword("");
+    //     alert("Registration success");
+    //   }, 1000);
+    // } else {
+    //   if (!validUser) {
+    //     setErrorMsg("Username taken");
+    //   } else {
+    //     setErrorMsg(
+    //       "Password must have at least 1 special character, uppercase and lowercase characters, and 1 number"
+    //     );
+    //   }
+    // }
   };
   const onUsernameChange = (e) => {
     setUsername(e.target.value);
