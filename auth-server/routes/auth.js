@@ -15,8 +15,9 @@ router.post(
 
 router.post("/signin", controller.signin);
 
-router.get("/userinfo",
-    authJwt.verifyToken
-    , controller.userinfo)
+router.post("/signinOtp", controller.signinOtp);
+
+router.get("/userinfo", authJwt.verifyToken, controller.userinfo)
+
 
 module.exports = router;

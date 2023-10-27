@@ -29,23 +29,27 @@ const initialiseUserRecords = (UserRecord) => {
             rows: 1 // 2, 3, 4, etc.
         }
     }).users
-    userRecords.map((record) => {
-        // console.log((record.F.getMonth()))
-        UserRecord.findOrCreate({
-            where: { email: record.B },
-            defaults: {
-                sub: record.A,
-                email: record.B,
-                first_name: record.C,
-                last_name: record.D,
-                status: record.E,
-                birthdate: record.F.toISOString().split('T')[0]
-            }
+
+    if(userRecords.length <= 0){
+        userRecords.map((record) => {
+            // console.log((record.F.getMonth()))
+            UserRecord.findOrCreate({
+                where: { email: record.B },
+                defaults: {
+                    sub: record.A,
+                    email: record.B,
+                    first_name: record.C,
+                    last_name: record.D,
+                    status: record.E,
+                    birthdate: record.F.toISOString().split('T')[0]
+                }
+            })
         })
-    })
+    }
 }
 
 // Role.
+
 const initialiseRoles = (Role) => {
     Role.findOrCreate({
         where: { id: 1 },
