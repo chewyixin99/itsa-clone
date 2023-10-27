@@ -2,18 +2,41 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateOTP } from "../lib/loginUtil";
+import axios from 'axios';
+
+// To be shifted out
+const BE_URL = "http://127.0.0.1:3001"
 
 const OTPVerification = () => {
   const navigate = useNavigate();
   const [input, setInput] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [email, setEmail] = useState("");
+
+  const username = localStorage.getItem("username") 
 
   useEffect(() => {
-    alert("OTP is 123456");
+    // alert("OTP is 123456"); 
+    setEmail(maskEmail(username))
   }, []);
 
-  const handleInput = (e) => {
+  function maskEmail(email) {
+    if (typeof email !== 'string') {
+      return ""; 
+    }
+  
+    const parts = email.split('@');
+    if (parts.length !== 2) {
+      return ""; 
+    }
+
+    const [prefix, suffix] = parts;
+    const newPrefix = '*'.repeat(Math.max(0, prefix.length - 3)) + prefix.slice(-3);
+    return newPrefix + '@' + suffix;
+  }
+
+  const handleInput = async (e) => {
     e.preventDefault();
     if (loading) {
       // do not do anything
@@ -43,18 +66,36 @@ const OTPVerification = () => {
       }
       if (idx === tmpInput.length - 1 && tmpInput[idx] !== "") {
         const otp = tmpInput.join("");
-        const validOtp = validateOTP(otp);
-        if (validOtp) {
+        try{
           setLoading(true);
-          setTimeout(() => {
+          const response = await axios.post(`${BE_URL}/oauth/signinOtp`, { email: username, code: otp })
+          if (response.status === 200){
             setLoading(false);
+            localStorage.setItem("user", JSON.stringify(response.data))
+            localStorage.removeItem("username")
             navigate("/home", {
               replace: true,
             });
-          }, 1000);
-        } else {
-          setErrorMsg("Invalid OTP, try again (otp hardcoded: 123456)");
+          } else {
+            setLoading(false);
+            setErrorMsg("Invalid OTP");
+          }
+        } catch (error) {
+          setErrorMsg("Invalid OTP, try again");
         }
+
+        // const validOtp = validateOTP(otp);
+        // if (validOtp) {
+        //   setLoading(true);
+        //   setTimeout(() => {
+        //     setLoading(false);
+        //     navigate("/home", {
+        //       replace: true,
+        //     });
+        //   }, 1000);
+        // } else {
+        //   setErrorMsg("Invalid OTP, try again (otp hardcoded: 123456)");
+        // }
       }
       setInput(tmpInput);
     }
@@ -79,7 +120,7 @@ const OTPVerification = () => {
         <hr />
         <div className="text-center mt-5">
           <div>Enter the OTP you received at</div>
-          <div className="font-bold">+65 **** 5012</div>
+          <div className="font-bold"> {email}</div>
         </div>
         <div className="text-center my-5">
           <input
