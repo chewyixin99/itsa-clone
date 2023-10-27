@@ -7,6 +7,10 @@ import {
   validateRegisterPassword,
   validateRegisterUsername,
 } from "../lib/loginUtil";
+import axios from 'axios';
+
+// To be shifted out
+const BE_URL = "http://127.0.0.1:3001"
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,26 +19,29 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
-  const onLoginClick = (e) => {
+  const onLoginClick = async (e) => {
     e.preventDefault();
-    const validUser = validateLoginUsername(username);
-    const validPassword = validateLoginPassword(username, password);
-    if (validUser && validPassword) {
-      setLoading(true);
-      setErrorMsg("");
-      setTimeout(() => {
-        setLoading(false);
-        navigate("/otp", {
+    // setLoading(true);
+
+    // Call BE API
+    if (username && password){
+      try{
+        setErrorMsg("");
+        const response = await axios.post(`${BE_URL}/oauth/signin`, { email: username, password: password })
+        if (response.status === 200){
+          localStorage.setItem("username", username)
+          setLoading(false);
+          navigate("/otp", {
           replace: true,
-        });
-      }, 1000);
-    } else {
-      if (!validUser) {
-        setErrorMsg("Username does not exist (user: admin, pw: admin)");
-      } else {
-        setErrorMsg(
-          "Username or password is incorrect (user: admin, pw: admin)"
-        );
+          });
+        } else {
+          setLoading(false);
+          // More general error to prevent people from hacking? 
+          setErrorMsg("Invalid username/password");
+        }
+      } catch (error){
+        setLoading(false);
+        setErrorMsg("Invalid username/password");
       }
     }
   };
