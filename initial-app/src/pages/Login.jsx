@@ -28,16 +28,27 @@ const Login = () => {
         setLoading(true);
         setErrorMsg("");
         const response = await axios.post(`${BE_URL}/oauth/signin`, { email: username, password: password })
-        if (response.status === 200){
-          localStorage.setItem("username", username)
-          setLoading(false);
-          navigate("/otp", {
-          replace: true,
-          });
-        } else {
+
+        if (response.status !== 200){
           setLoading(false);
           // More general error to prevent people from hacking? 
           setErrorMsg("Invalid username/password");
+          return
+        }
+        
+        localStorage.setItem("username", username)
+        if(response.data.type === 1) {
+          // OTP via email
+          setLoading(false);
+          navigate("/otp", {
+            replace: true,
+          });
+        } else{
+          // OTP via authenticator app
+          setLoading(false);
+          navigate("/qr", {
+            replace: true,
+          });
         }
       } catch (error){
         setLoading(false);

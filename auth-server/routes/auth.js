@@ -19,5 +19,9 @@ router.post("/signinOtp", controller.signinOtp);
 
 router.get("/userinfo", authJwt.verifyToken, controller.userinfo)
 
+router.post("/validateqr", controller.validateQR)
+
+router.post("/qr", controller.generateQR)
+
 
 module.exports = router;

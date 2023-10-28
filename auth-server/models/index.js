@@ -33,6 +33,8 @@ db.user = require("../models/user.model.js")(sequelize, Sequelize);
 db.role = require("../models/role.model.js")(sequelize, Sequelize);
 db.userRecord = require("../models/userRecord.model.js")(sequelize, Sequelize);
 db.userValidate = require("../models/userValidate.model.js")(sequelize, Sequelize);
+db.gAuth = require("../models/gAuth.model.js")(sequelize, Sequelize);
+db.authType = require("../models/authType.model.js")(sequelize, Sequelize);
 
 db.role.belongsToMany(db.user, {
     through: "user_roles"
@@ -41,6 +43,19 @@ db.user.belongsToMany(db.role, {
     through: "user_roles"
 });
 
+db.authType.belongsTo(db.user, {
+    through: "user_auth",
+    foreignKey: "userId",
+});
+
+db.user.belongsToMany(db.authType, {
+    through: "user_auth",
+    foreignKey: "userId",
+});
+
+
+
 db.ROLES = ["user", "admin"];
+db.AUTHTYPES = ["otp", "gauth"]
 
 module.exports = db

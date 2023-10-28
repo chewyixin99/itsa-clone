@@ -33,22 +33,24 @@ const initialiseUserRecords = (UserRecord) => {
         }
     }).users
 
-    if(userRecords.length <= 0){
-        userRecords.map((record) => {
-            // console.log((record.F.getMonth()))
-            UserRecord.findOrCreate({
-                where: { email: record.B },
-                defaults: {
-                    sub: record.A,
-                    email: record.B,
-                    first_name: record.C,
-                    last_name: record.D,
-                    status: record.E,
-                    birthdate: record.F.toISOString().split('T')[0]
-                }
+    UserRecord.count().then(count=>{
+        if (count <= 0){
+            userRecords.map((record) => {
+                // console.log((record.F.getMonth()))
+                UserRecord.findOrCreate({
+                    where: { email: record.B },
+                    defaults: {
+                        sub: record.A,
+                        email: record.B,
+                        first_name: record.C,
+                        last_name: record.D,
+                        status: record.E,
+                        birthdate: record.F.toISOString().split('T')[0]
+                    }
+                })
             })
-        })
-    }
+        }
+    }) 
 }
 
 // Role.
@@ -85,10 +87,44 @@ const initialiseRoles = (Role) => {
     });
 }
 
+
+const initialiseAuthType = (AuthType) => {
+    AuthType.findOrCreate({
+        where: { id: 1 },
+        defaults: {
+            id: 1, name: "otp"
+        },
+    }).then(([role, created]) => {
+        if (created) {
+            console.log('OTP auth created successfully!');
+        } else {
+            console.log('OTP auth already exists.');
+        }
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
+
+    AuthType.findOrCreate({
+        where: { id: 2 },
+        defaults: {
+            id: 2, name: "gauth"
+        },
+    }).then(([role, created]) => {
+        if (created) {
+            console.log('gauth created successfully!');
+        } else {
+            console.log('gauth already exists.');
+        }
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
 const init = async () => {
     await db.sequelize.sync()
     initialiseRoles(db.role)
     initialiseUserRecords(db.userRecord)
+    initialiseAuthType(db.authType)
 }
 init()
 
