@@ -12,6 +12,7 @@
     "license": "ISC",
     "dependencies": {
         "aws-sdk": "^2.1482.0",
+        "axios": "^1.6.0",
         "bcryptjs": "^2.4.3",
         "convert-excel-to-json": "^1.7.0",
         "cors": "^2.8.5",
@@ -20,6 +21,7 @@
         "jsonwebtoken": "^9.0.2",
         "mysql2": "^3.6.1",
         "nodemailer": "^6.9.7",
+        "nodemon": "^3.0.1",
         "otplib": "^12.0.1",
         "qrcode": "^1.5.3",
         "sequelize": "^6.33.0"

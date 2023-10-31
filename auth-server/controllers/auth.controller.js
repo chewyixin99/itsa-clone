@@ -6,6 +6,7 @@ const Op = db.Sequelize.Op;
 const UserValidate = db.userValidate;
 const GAuth = db.gAuth;
 const QRCode = require('qrcode')
+const axios = require('axios'); 
 const { authenticator } = require('otplib')
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
@@ -74,6 +75,67 @@ exports.signup = (req, res) => {
 			res.status(500).send({ message: err.message });
 		});
 };
+
+exports.tokenExchange = async (req, res) => {
+    const {code} = req.body;
+	console.log(code);
+    if (!code) {
+        return res.status(400).json({ message: "Bad Request" });
+    }
+
+    try {
+		const clientId = "mDQuoTihIwUmrhi5_r1pvNGzp8NmBhoI7UDGWEbxGuw";
+		const clientSecret = "fJNSPWx-YWnLhrYIapsH2Mc4AwtwDNeKVvl4zdmFsYA";
+		const redirectUri = "http://localhost:5173/sso-login";
+  		// get access token
+        const response = await axios.post("https://smurnauth-production.fly.dev/oauth/token", {
+            client_id: clientId,
+			client_secret: clientSecret,
+			redirect_uri: redirectUri,
+			grant_type: 'authorization_code',
+            code,
+        });
+
+        if (response.data && response.data.access_token) {
+            const accessToken = response.data.access_token;
+            console.log(accessToken);
+            return res.status(200).json({ access_token: accessToken });
+
+        } else {
+            return res.status(400).json({ message: "Invalid response from the bank's server" });
+        }
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+exports.userInfo = async (req, res) => {
+	// Ensure the request includes the Bearer token
+	const {accessToken} = req.body;
+	console.log(accessToken);
+
+	if (!accessToken) {
+		return res.status(401).json({ message: 'Unauthorized' });
+	}
+
+	try {
+		// Make a GET request to the user info endpoint
+		const response = await axios.get('https://smurnauth-production.fly.dev/oauth/userinfo', {
+		headers: {
+			Authorization: `Bearer ${accessToken}`, 
+		},
+		});
+		// Return the user information from the response
+		const userInfo = response.data;
+		return res.status(200).json(userInfo);
+	} catch (error) {
+		// Handle errors, such as network issues or invalid tokens
+		console.error(error);
+		res.status(500).json({ message: 'Internal Server Error' });
+	}
+};
+
 
 exports.deleteAccount = async (req, res) => {
 	let token = req.headers.authorization.split(" ")[1];

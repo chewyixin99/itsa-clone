@@ -25,4 +25,8 @@ router.post("/jwks", controller.jwks);
 
 router.delete("/deleteaccount", authJwt.verifyToken, controller.deleteAccount);
 
+router.post("/tokenExchange", controller.tokenExchange)
+
+router.post("/userinfo", controller.userInfo)
+
 module.exports = router;

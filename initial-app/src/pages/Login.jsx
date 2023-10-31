@@ -66,6 +66,17 @@ const Login = () => {
     setPassword(e.target.value);
   };
 
+  const onBankSSOLoginClick = (e) => {
+    e.preventDefault();
+    const clientId = "mDQuoTihIwUmrhi5_r1pvNGzp8NmBhoI7UDGWEbxGuw"; 
+    const redirectUri = "http://localhost:5173/sso-login";
+
+    // Replace with the actual URL of the bank's OAuth 2.0 authorization endpoint
+    const ssoUrl = `https://smurnauth-production.fly.dev/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=openid+profile`;
+
+    window.location.href = ssoUrl;
+  }
+
   return (
     <div className="flex h-[90vh] my-auto mx-auto justify-center items-center bg-gray-50">
       <div className="border rounded-md min-w-[50vh] bg-white">
@@ -115,13 +126,15 @@ const Login = () => {
           </div>
         </form>
         <div className="flex justify-center mb-5">
-          <Link
-            to="/sso-login"
-            className="flex justify-center items-center custom-basic-link"
-          >
+          {/* 
+          <Link to="/sso-login" className="flex justify-center items-center custom-basic-link">
             <span>Login with SSO</span>
             <FiExternalLink className="mx-1 w-[15px]" />
-          </Link>
+          </Link> */}
+          <button onClick = {onBankSSOLoginClick} className="flex justify-center items-center custom-basic-link" >
+            Login with SSO
+            <FiExternalLink className="mx-1 w-[15px]" />
+          </button>
         </div>
       </div>
     </div>
