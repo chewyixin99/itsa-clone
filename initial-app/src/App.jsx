@@ -9,6 +9,7 @@ import UserProfile from "./pages/UserProfile";
 import OTPVerification from "./pages/OTPVerification";
 import QRVerification from "./pages/QRVerification";
 import QRVerificationSetup from "./pages/QRVerificationSetup"
+import Register from "./pages/Register"
 const App = () => {
   return (
     <>
@@ -16,6 +17,7 @@ const App = () => {
         <Route path="/" element={<Navbar />}>
           <Route element={<Login />} index />
           <Route element={<Home />} path="home" />
+          <Route element={<Register />} path="register" />
           <Route element={<OTPVerification />} path="otp" />
           <Route element={<QRVerification />} path="qr" />
           <Route element={<QRVerificationSetup />} path="qr-setup" />

@@ -1,7 +1,9 @@
 const jwt = require("jsonwebtoken");
 const db = require("../models");
+const fs = require("fs");
+
+const publicKey = fs.readFileSync('public.key', 'utf8');
 const User = db.user;
-const secret = process.env.TOKENSECRET
 verifyToken = (req, res, next) => {
     let tokenHeader = req.headers.authorization;
 
@@ -12,7 +14,7 @@ verifyToken = (req, res, next) => {
     }
     let token = tokenHeader.substring(7, tokenHeader.length)
     jwt.verify(token,
-        secret,
+        publicKey,
         (err, decoded) => {
             // if (err.name === "TokenExpiredError") {
             // return res.status()

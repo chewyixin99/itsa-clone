@@ -3,12 +3,11 @@ const router = express.Router()
 
 const auth = require('./auth')
 const mail = require('./mail')
-const gAuth = require('./gauth')
-
+const user = require('./user')
 
 router.use('/oauth', auth);
 router.use('/mail', mail);
-router.use('/gauth', gAuth);
+router.use('/user', user);
 router.get('/health', (req, res) => {
     const healthcheck = {
         uptime: process.uptime(),

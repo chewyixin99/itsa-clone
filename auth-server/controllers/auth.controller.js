@@ -9,6 +9,10 @@ const QRCode = require('qrcode')
 const { authenticator } = require('otplib')
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
+const fs = require('fs');
+const privateKey = fs.readFileSync('private.key', 'utf8');
+const publicKey = fs.readFileSync('public.key', 'utf8');
+
 
 const { sendMail } = require("./mail.controller");
 const { auth } = require("googleapis/build/src/apis/abusiveexperiencereport");
@@ -30,10 +34,11 @@ exports.signup = (req, res) => {
 		},
 	})
 		.then((user) => {
-			if (user) {
-				sub = user.sub;
-				status = user.status;
+			if (!user) {
+				res.status(404).send({ message: "Email not found", success: false });
 			}
+			sub = user.sub;
+			status = user.status;
 			User.create({
 				sub: sub,
 				email: req.body.email,
@@ -70,91 +75,46 @@ exports.signup = (req, res) => {
 		});
 };
 
-// exports.signin = (req, res) => {
-//     User.findOne({
-//         where: {
-//             email: req.body.email
-//         }
-//     }).then(user => {
-//         if (!user) {
-//             return res.status(404).send({ message: "User Not found." });
-//         }
-
-//         var passwordIsValid = bcrypt.compareSync(
-//             req.body.password,
-//             user.password
-//         );
-
-//         if (!passwordIsValid) {
-//             return res.status(401).send({
-//                 accessToken: null,
-//                 message: "Invalid Password!"
-//             });
-//         }
-
-//         const token = jwt.sign({ id: user.sub },
-//             process.env.TOKENSECRET,
-//             {
-//                 algorithm: 'HS256',
-//                 allowInsecureKeySizes: true,
-//                 expiresIn: 3600, // 1 hour
-//             });
-//         const refreshToken = jwt.sign({ id: user.sub },
-//             process.env.REFRESHSECRET,
-//             {
-//                 algorithm: 'HS256',
-//                 allowInsecureKeySizes: true,
-//                 expiresIn: 86400, // 24 hours
-//             });
-
-//         var authorities = [];
-//         user.getRoles().then(roles => {
-//             for (let i = 0; i < roles.length; i++) {
-//                 authorities.push("ROLE_" + roles[i].name.toUpperCase());
-//             }
-//             res.cookie('jwt', refreshToken, {
-//                 httpOnly: true,
-//                 sameSite: 'None', secure: true,
-//                 maxAge: 24 * 60 * 60 * 1000
-//             });
-//             res.status(200).send({
-//                 sub: user.sub,
-//                 username: user.username,
-//                 email: user.email,
-//                 roles: authorities,
-//                 accessToken: token,
-//             });
-//         });
-//     }).catch(err => {
-//         res.status(500).send({ message: err.message });
-//     });
-// };
-
-exports.userinfo = (req, res) => {
+exports.deleteAccount = async (req, res) => {
 	let token = req.headers.authorization.split(" ")[1];
 	let content = jwt.decode(token);
 	console.log(content);
-	User.findOne({
+	const user = await User.findOne({
 		where: {
 			sub: content.id,
 		},
-	}).then((user) => {
-		if (!user) {
-			return res.status(404).send({ message: "User Not found." });
-		}
-		res.send({
-			sub: user.sub,
-
-			email: user.email,
-			given_name: user.first_name,
-			family_name: user.last_name,
-			name: user.first_name + " " + user.last_name,
-			birthdate: new Date(user.birthdate),
-			// "gender": "Female",
-			// "phone_number": "+967 (103) 878-2610"
-		});
 	});
-};
+	if (!user) {
+		return res.status(404).send({ message: "User Not found.", success: false });
+	}
+	User.destroy({
+		where: {
+			sub: content.id,
+		},
+	})
+
+	UserValidate.destroy({
+		where: {
+			email: user.email
+		}
+	})
+
+	GAuth.destroy({
+		where: {
+			email: user.email
+		}
+	})
+	return res.send({ success: true, message: "User successfully deleted" });
+}
+
+
+
+
+exports.jwks = async (req, res) => {
+	res.send({
+		publicKey
+	})
+}
 
 exports.signin = async (req, res) => {
 	const { email, password } = req.body;
@@ -303,9 +263,8 @@ exports.signinOtp = async (req, res) => {
 	});
 
 	// Grant user access, generate and provide the token
-	const token = jwt.sign({ id: user.sub }, process.env.TOKENSECRET, {
-		algorithm: "HS256",
-		allowInsecureKeySizes: true,
+	const token = jwt.sign({ id: user.sub }, privateKey, {
+		algorithm: "RS256",
 		expiresIn: 3600, // 1 hour
 	});
 
@@ -381,9 +340,8 @@ async function verifyLogin(email, code, req, res) {
 	});
 
 	// Grant user access, generate and provide the token
-	const token = jwt.sign({ id: user.sub }, process.env.TOKENSECRET, {
-		algorithm: "HS256",
-		allowInsecureKeySizes: true,
+	const token = jwt.sign({ id: user.sub }, privateKey, {
+		algorithm: "RS256",
 		expiresIn: 3600, // 1 hour
 	});
 

@@ -17,11 +17,12 @@ router.post("/signin", controller.signin);
 
 router.post("/signinOtp", controller.signinOtp);
 
-router.get("/userinfo", authJwt.verifyToken, controller.userinfo)
+router.post("/validateqr", controller.validateQR);
 
-router.post("/validateqr", controller.validateQR)
+router.post("/qr", controller.generateQR);
 
-router.post("/qr", controller.generateQR)
+router.post("/jwks", controller.jwks);
 
+router.delete("/deleteaccount", authJwt.verifyToken, controller.deleteAccount);
 
 module.exports = router;
