@@ -107,12 +107,6 @@ const Register = () => {
             className="custom-form-field"
             placeholder="password"
           />
-          <div className="custom-gray-text mb-3">
-            Forgot your password? Click{" "}
-            <Link className="custom-basic-link" to="/reset-password-email">
-              here
-            </Link>
-          </div>
           <div className="text-red-500 mb-5">{errorMsg}</div>
           <div className="text-right">
             <button
@@ -131,15 +125,6 @@ const Register = () => {
             </button>
           </div>
         </form>
-        <div className="flex justify-center mb-5">
-          <Link
-            to="/sso-login"
-            className="flex justify-center items-center custom-basic-link"
-          >
-            <span>Login with SSO</span>
-            <FiExternalLink className="mx-1 w-[15px]" />
-          </Link>
-        </div>
       </div>
     </div>
   );

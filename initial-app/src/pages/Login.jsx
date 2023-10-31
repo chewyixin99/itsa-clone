@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiExternalLink } from "react-icons/fi";
-import {
-  validateLoginPassword,
-  validateLoginUsername,
-  validateRegisterPassword,
-  validateRegisterUsername,
-} from "../lib/loginUtil";
 import axios from 'axios';
 
 // To be shifted out
