@@ -99,6 +99,12 @@ exports.tokenExchange = async (req, res) => {
         if (response.data && response.data.access_token) {
             const accessToken = response.data.access_token;
             console.log(accessToken);
+			res.cookie("bankSSOAccessToken", accessToken, {
+				httpOnly: true,
+				sameSite: "None",
+				secure: true,
+				maxAge: 24 * 60 * 60 * 1000,
+			});
             return res.status(200).json({ access_token: accessToken });
 
         } else {
