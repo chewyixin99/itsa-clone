@@ -99,7 +99,7 @@ exports.tokenExchange = async (req, res) => {
         if (response.data && response.data.access_token) {
             const accessToken = response.data.access_token;
             console.log(accessToken);
-			res.cookie("bankSSOAccessToken", accessToken, {
+			res.cookie("Authorization", accessToken, {
 				httpOnly: true,
 				sameSite: "None",
 				secure: true,
@@ -117,30 +117,46 @@ exports.tokenExchange = async (req, res) => {
 };
 
 exports.userInfo = async (req, res) => {
-	// Ensure the request includes the Bearer token
-	const {accessToken} = req.body;
-	console.log(accessToken);
-
-	if (!accessToken) {
-		return res.status(401).json({ message: 'Unauthorized' });
-	}
-
 	try {
+	  // Ensure the request includes the Authorization header
+		console.log(req.headers)
+	  const authHeader = req.headers.authorization || req.headers.Authorization; // Handle both cases
+		
+		if (!authHeader) {
+			return res.status(401).json({ message: 'Unauthorized' });
+		}
+	
+		// Split the Authorization header to extract the token
+		const authHeaderParts = authHeader.split(" ");
+		if (authHeaderParts.length !== 2 || authHeaderParts[0] !== 'Bearer') {
+			return res.status(401).json({ message: 'Invalid Authorization header format' });
+		}
+	
+		const accessToken = authHeaderParts[1];
+	
+		// Now you have the access token
+		console.log("Access Token:", accessToken);
+	
 		// Make a GET request to the user info endpoint
 		const response = await axios.get('https://smurnauth-production.fly.dev/oauth/userinfo', {
-		headers: {
-			Authorization: `Bearer ${accessToken}`, 
-		},
+			headers: {
+			Authorization: `Bearer ${accessToken}`,
+			},
 		});
+	
 		// Return the user information from the response
 		const userInfo = response.data;
+		console.log("User Information:", userInfo);
 		return res.status(200).json(userInfo);
-	} catch (error) {
+		} catch (error) {
 		// Handle errors, such as network issues or invalid tokens
 		console.error(error);
 		res.status(500).json({ message: 'Internal Server Error' });
-	}
-};
+		}
+	};
+	
+	
+	
 
 
 exports.deleteAccount = async (req, res) => {

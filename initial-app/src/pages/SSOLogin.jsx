@@ -14,7 +14,6 @@ const SSOLogin = () => {
         // Parse the Authorization Code from the URL
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get("code");
-        console.log("Authorization Code:", code);
 
         if (code) {
           // Create a post request to your backend endpoint for token exchange
@@ -22,15 +21,14 @@ const SSOLogin = () => {
 
           if (response.status === 200) {
             const accessToken = response.data.access_token;
-            console.log("Access Token:", accessToken);
-
-            // Make a GET request to retrieve user information using the access token
-            const userInfoResponse = await axios.post(`${BE_URL}/oauth/userinfo`, {accessToken: accessToken });
+            const config = {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            };
+            const userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
 
             if (userInfoResponse.status === 200) {
               const userInfo = userInfoResponse.data;
-              console.log("User Information:", userInfo);
-              navigate("/user-profile",{state:{userInfo}});
+              navigate("/user-profile", { state: { userInfo } });
             }
           }
         }
