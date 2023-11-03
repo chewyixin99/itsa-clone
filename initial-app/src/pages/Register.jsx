@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FiExternalLink } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import {
+  validateBirthday,
   validateRegisterPassword,
-  validateRegisterUsername,
 } from "../lib/loginUtil";
 import axios from 'axios';
 
@@ -14,6 +13,9 @@ const Register = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [birthDate, setBirthDate] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -27,35 +29,13 @@ const Register = () => {
   const onRegisterClick = async (e) => {
     e.preventDefault();
 
-    if (username && password) {
-      try {
-        setLoading(true);
-        setErrorMsg("");
-        const response = await axios.post(`${BE_URL}/oauth/signup`, { email: username, password: password })
-        if (response.status === 200) {
-          setLoading(false);
-          navigate("/login", {
-            replace: true,
-          });
-          setUsername("");
-          setPassword("");
-          alert("Registration success");
-        } else {
-          setLoading(false);
-          setErrorMsg("Username taken");
-        }
-      } catch (error) {
-        setLoading(false);
-        setErrorMsg("Password must have at least 1 special character, uppercase and lowercase characters, and 1 number");
-      }
-    }
-
     const validPassword = validateRegisterPassword(password);
-    if (username && validPassword) {
+    const validBirthday = validateBirthday(birthDate);
+    if (username && validPassword && validBirthday && firstName && lastName) {
       try {
         setLoading(true);
         setErrorMsg("");
-        const response = await axios.post(`${BE_URL}/oauth/signup`, { email: username, password: password })
+        const response = await axios.post(`${BE_URL}/oauth/signup`, { email: username, password: password, first_name: firstName, last_name: lastName, birthdate: birthDate })
         if (response.status === 200) {
           setLoading(false);
           navigate("/login", {
@@ -70,13 +50,19 @@ const Register = () => {
         }
       } catch (error) {
         setLoading(false);
-        setErrorMsg("Password must have at least 1 special character, uppercase and lowercase characters, and 1 number");
+        setErrorMsg(error.response.data.message);
       }
     }
     else {
+      if (!validBirthday && !validPassword) {
+        setErrorMsg("Password must have at least 1 special character, uppercase and lowercase characters, and 1 number \nEnter birthday in the following format YYYY-MM-DD E.g.(1975-10-20)")
+      }
+      else if (!validPassword)
       setErrorMsg(
         "Password must have at least 1 special character, uppercase and lowercase characters, and 1 number"
       );
+      else if (!validBirthday)
+        setErrorMsg("Enter birthday in the following format YYYY-MM-DD E.g.(1975-10-20)");
     }
   }
   const onUsernameChange = (e) => {
@@ -84,6 +70,18 @@ const Register = () => {
   };
   const onPasswordChange = (e) => {
     setPassword(e.target.value);
+  };
+  const onFirstNameChange = (e) => {
+    setFirstName(e.target.value);
+  };
+  const onLastNameChange = (e) => {
+    setLastName(e.target.value);
+  };
+  // const onGenderChange = (e) => {
+  //   setUsername(e.target.value);
+  // };
+  const onBirthDateChange = (e) => {
+    setBirthDate(e.target.value);
   };
   return (
     <div className="flex h-[90vh] my-auto mx-auto justify-center items-center bg-gray-50">
@@ -107,7 +105,35 @@ const Register = () => {
             className="custom-form-field"
             placeholder="password"
           />
-          <div className="text-red-500 mb-5">{errorMsg}</div>
+          <div>First Name</div>
+          <input
+            onChange={onFirstNameChange}
+            value={firstName}
+            type="text"
+            className="custom-form-field"
+            placeholder="first name"
+          />
+          <div>Last Name</div>
+          <input
+            onChange={onLastNameChange}
+            value={lastName}
+            type="text"
+            className="custom-form-field"
+            placeholder="last name"
+          />
+          <div>Birth Date (YYYY-MM-DD)</div>
+          <input
+            onChange={onBirthDateChange}
+            value={birthDate}
+            type="text"
+            className="custom-form-field"
+            placeholder="1975-10-10"
+          />
+          <div className="text-red-500 mb-5">
+            {errorMsg.split('\n').map((line, index) => (
+              <div key={index}>{line}</div>
+            ))}
+          </div>
           <div className="text-right">
             <button
               onClick={onRegisterClick}

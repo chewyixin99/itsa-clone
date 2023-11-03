@@ -47,8 +47,7 @@ const QRVerificationSetup = () => {
 
 				localStorage.setItem("user", JSON.stringify(response.data));
 				localStorage.removeItem("username");
-        console.log("success?")
-				navigate("../home", {
+				navigate("/user-profile", {
 					replace: true,
 				});
         

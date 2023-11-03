@@ -7,7 +7,7 @@ import axios from 'axios';
 // To be shifted out
 const BE_URL = "http://127.0.0.1:3001"
 
-const OTPVerification = () => {
+const OTPVerification = ({ login }) => {
   const navigate = useNavigate();
   const [input, setInput] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -73,6 +73,7 @@ const OTPVerification = () => {
             setLoading(false);
             localStorage.setItem("user", JSON.stringify(response.data))
             localStorage.removeItem("username")
+            login()
             navigate("/home", {
               replace: true,
             });

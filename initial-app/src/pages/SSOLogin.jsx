@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const BE_URL = "http://127.0.0.1:3001";
 
-const SSOLogin = () => {
+const SSOLogin = ({ login }) => {
   const navigate = useNavigate();
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -20,16 +20,20 @@ const SSOLogin = () => {
           const response = await axios.post(`${BE_URL}/oauth/tokenExchange`, { code: code });
 
           if (response.status === 200) {
-            const accessToken = response.data.access_token;
-            const config = {
-              headers: { Authorization: `Bearer ${accessToken}` }
-            };
-            const userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
+            // const accessToken = response.data.access_token;
+            localStorage.setItem("user", JSON.stringify(response.data))
+            localStorage.setItem("sso", true)
+            login()
+            navigate("/user-profile")
+            // const config = {
+            //   headers: { Authorization: `Bearer ${accessToken}` }
+            // };
+            // const userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
 
-            if (userInfoResponse.status === 200) {
-              const userInfo = userInfoResponse.data;
-              navigate("/user-profile", { state: { userInfo } });
-            }
+            // if (userInfoResponse.status === 200) {
+            //   const userInfo = userInfoResponse.data;
+            //   navigate("/user-profile", { state: { userInfo } });
+            // }
           }
         }
       } catch (error) {

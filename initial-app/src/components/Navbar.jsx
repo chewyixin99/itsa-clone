@@ -1,8 +1,7 @@
 import logo from "../assets/ascenda.png";
 import { Outlet, Link } from "react-router-dom";
 import { CgProfile } from "react-icons/cg";
-
-const Navbar = () => {
+const Navbar = ({ isLoggedIn }) => {
   return (
     <>
       <div className="p-3 flex justify-between items-center border-b">
@@ -15,14 +14,18 @@ const Navbar = () => {
         </div>
         {/* RHS */}
         <div className="flex items-center">
-          <Link className="px-3 hover:underline" to={"/login"}>
-            Login
+          {isLoggedIn ? <>
+            <Link className="px-3 hover:underline" to={"/logout"}>
+              Logout
           </Link>
           <div className="px-3">
             <Link to="/user-profile">
               <CgProfile className="w-[20px] h-[20px]" />
             </Link>
-          </div>
+            </div></> : <Link className="px-3 hover:underline" to={"/login"}>
+            Login
+          </Link>
+          }
         </div>
       </div>
       <Outlet />

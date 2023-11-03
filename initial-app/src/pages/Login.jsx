@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FiExternalLink } from "react-icons/fi";
 import axios from 'axios';
@@ -6,7 +6,13 @@ import axios from 'axios';
 // To be shifted out
 const BE_URL = "http://127.0.0.1:3001"
 
-const Login = () => {
+const Login = ({ login }) => {
+  useEffect(() => {
+    // alert("OTP is 123456"); 
+    if (localStorage.getItem("user")) {
+      navigate("/user-profile")
+    }
+  }, []);
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -37,12 +43,16 @@ const Login = () => {
           navigate("/otp", {
             replace: true,
           });
-        } else{
+        } else if (response.data.type === 2) {
           // OTP via authenticator app
           setLoading(false);
           navigate("/qr", {
             replace: true,
           });
+        } else {
+          localStorage.setItem("user", JSON.stringify(response.data))
+          login()
+          navigate("/user-profile")
         }
       } catch (error){
         setLoading(false);

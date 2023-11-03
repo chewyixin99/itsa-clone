@@ -5,7 +5,6 @@ var jwt = require("jsonwebtoken");
 exports.userinfo = (req, res) => {
     let token = req.headers.authorization.split(" ")[1];
     let content = jwt.decode(token);
-    console.log(content);
     User.findOne({
         where: {
             sub: content.id,

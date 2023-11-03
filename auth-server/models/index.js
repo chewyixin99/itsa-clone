@@ -55,7 +55,7 @@ db.user.belongsToMany(db.authType, {
 
 
 
-db.ROLES = ["user", "admin"];
-db.AUTHTYPES = ["otp", "gauth"]
+db.ROLES = ["user", "moderator", "admin"];
+db.AUTHTYPES = ["otp", "gauth", "custom"]
 
 module.exports = db

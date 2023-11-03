@@ -4,6 +4,8 @@ const cors = require("cors")
 const app = express()
 const db = require("./models/index")
 const excelToJson = require('convert-excel-to-json');
+const Op = db.Sequelize.Op;
+var bcrypt = require("bcryptjs");
 
 
 const corsOptions = {
@@ -85,8 +87,83 @@ const initialiseRoles = (Role) => {
     }).catch((error) => {
         console.error('Error:', error);
     });
+    Role.findOrCreate({
+        where: { id: 3 },
+        defaults: {
+            id: 3, name: "moderator"
+        },
+    }).then(([role, created]) => {
+        if (created) {
+            console.log('Role moderator created successfully!');
+        } else {
+            console.log('Role moderator already exists.');
+        }
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
 }
-
+const initialiseDemoUsers = async (User, Role) => {
+    const user1 = await User.findOne({
+        where: {
+            sub: "testsub1"
+        }
+    })
+    const user2 = await User.findOne({
+        where: {
+            sub: "testsub2"
+        }
+    })
+    const user3 = await User.findOne({
+        where: {
+            sub: "testsub3"
+        }
+    })
+    if (!user1) {
+        User.create({
+            sub: "testsub1",
+            email: "demouser@example.com",
+            password: bcrypt.hashSync("password", 8),
+            first_name: "Demo",
+            last_name: "User",
+            birthdate: "10/10/10",
+            status: "valid",
+        }).then((user) => {
+            // user role = 1
+            user.setAuthTypes(3);
+            user.setRoles([1]);
+        });
+    }
+    if (!user2) {
+        User.create({
+            sub: "testsub2",
+            email: "demomod@example.com",
+            password: bcrypt.hashSync("password", 8),
+            first_name: "Demo",
+            last_name: "Moderator",
+            birthdate: "11/11/11",
+            status: "valid",
+        }).then((user) => {
+            // user role = 1
+            user.setAuthTypes(3);
+            user.setRoles([1, 2]);
+        });
+    }
+    if (!user3) {
+        User.create({
+            sub: "testsub3",
+            email: "demoadmin@example.com",
+            password: bcrypt.hashSync("password", 8),
+            first_name: "Demo",
+            last_name: "Admin",
+            birthdate: "12/12/12",
+            status: "valid",
+        }).then((user) => {
+            // user role = 1
+            user.setAuthTypes(3);
+            user.setRoles([1, 2, 3]);
+        });
+    }
+}
 
 const initialiseAuthType = (AuthType) => {
     AuthType.findOrCreate({
@@ -118,6 +195,20 @@ const initialiseAuthType = (AuthType) => {
     }).catch((error) => {
         console.error('Error:', error);
     });
+    AuthType.findOrCreate({
+        where: { id: 3 },
+        defaults: {
+            id: 3, name: "custom"
+        },
+    }).then(([role, created]) => {
+        if (created) {
+            console.log('custom created successfully!');
+        } else {
+            console.log('custom already exists.');
+        }
+    }).catch((error) => {
+        console.error('Error:', error);
+    });
 }
 
 const init = async () => {
@@ -125,6 +216,7 @@ const init = async () => {
     initialiseRoles(db.role)
     initialiseUserRecords(db.userRecord)
     initialiseAuthType(db.authType)
+    initialiseDemoUsers(db.user, db.role)
 }
 init()
 

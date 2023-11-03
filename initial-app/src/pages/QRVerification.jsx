@@ -6,7 +6,7 @@ import axios from 'axios';
 const BE_URL = "http://127.0.0.1:3001"
 
 
-const QRVerification = () => {
+const QRVerification = ({ login }) => {
   const navigate = useNavigate();
   const [enteredCode, setEnteredCode] = useState(""); // State for user-entered code
   const [isVerified, setIsVerified] = useState(false); // State for verification status
@@ -28,7 +28,8 @@ const QRVerification = () => {
 
         localStorage.setItem("user", JSON.stringify(response.data))
         localStorage.removeItem("username")
-        navigate("/home", {
+        login();
+        navigate("/user-profile", {
           replace: true,
         });
 

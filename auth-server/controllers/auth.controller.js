@@ -97,13 +97,12 @@ exports.tokenExchange = async (req, res) => {
         });
 
         if (response.data && response.data.access_token) {
-            const accessToken = response.data.access_token;
-            console.log(accessToken);
+			const accessToken = response.data.access_token;
 			res.cookie("Authorization", accessToken, {
 				httpOnly: true,
 				sameSite: "None",
 				secure: true,
-				maxAge: 24 * 60 * 60 * 1000,
+				maxAge: 1 * 60 * 60 * 1000,
 			});
             return res.status(200).json({ access_token: accessToken });
 
@@ -274,9 +273,49 @@ exports.signin = async (req, res) => {
 			res.status(500);
 			res.send(error);
 		}
-	} else {
+	} else if (authTypes[0].id === 2) {
 		// verify Gauth code
 		res.send({type: 2, message: "Open your authenticator app and enter otp"});
+	}
+	else {
+		const user = await User.findOne({
+			where: {
+				email: email,
+			},
+		});
+
+		// Grant user access, generate and provide the token
+		const token = jwt.sign({ id: user.sub }, privateKey, {
+			algorithm: "RS256",
+			expiresIn: 3600, // 1 hour
+		});
+
+		const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
+			algorithm: "HS256",
+			allowInsecureKeySizes: true,
+			expiresIn: 86400, // 24 hours
+		});
+
+		var authorities = [];
+
+		user.getRoles().then((roles) => {
+			for (let i = 0; i < roles.length; i++) {
+				authorities.push("ROLE_" + roles[i].name.toUpperCase());
+			}
+			res.cookie("jwt", refreshToken, {
+				httpOnly: true,
+				sameSite: "None",
+				secure: true,
+				maxAge: 24 * 60 * 60 * 1000,
+			});
+			res.status(200).send({
+				sub: user.sub,
+				username: user.username,
+				email: user.email,
+				roles: authorities,
+				accessToken: token,
+			});
+		});
 	}
 };
 
