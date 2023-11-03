@@ -1,5 +1,6 @@
 const mysql = require("mysql2")
 const Sequelize = require("sequelize");
+const { config } = require("./setup")
 
 // const setUpDB = async () => {
 //     const connection = await mysql.createConnection({
@@ -14,17 +15,14 @@ const Sequelize = require("sequelize");
 // }
 
 // setUpDB()
+
+
 const sequelize = new Sequelize(
-        process.env.DATABASE,
-        process.env.DBUSER,
-        process.env.PASSWORD,
-        {
-            host: process.env.HOST,
-            dialect: process.env.DIALECT,
-        }
+    ...config
     );
 
-    const db = {};
+
+const db = {};
 
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;

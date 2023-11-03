@@ -6,11 +6,12 @@ const db = require("./models/index")
 const excelToJson = require('convert-excel-to-json');
 const Op = db.Sequelize.Op;
 var bcrypt = require("bcryptjs");
+const { config, createDatabaseIfNotExists } = require("./models/setup")
 
 
 const corsOptions = {
-    // origin: process.env.ORIGIN
-    origin: "*"
+    origin: process.env.ORIGIN
+    // origin: "*"
 }
 app.use(cors(corsOptions))
 
@@ -212,13 +213,13 @@ const initialiseAuthType = (AuthType) => {
 }
 
 const init = async () => {
+    await createDatabaseIfNotExists(config)
     await db.sequelize.sync()
     initialiseRoles(db.role)
     initialiseUserRecords(db.userRecord)
     initialiseAuthType(db.authType)
     initialiseDemoUsers(db.user, db.role)
 }
-init()
 
-module.exports = app
+module.exports = { app, init }
 
