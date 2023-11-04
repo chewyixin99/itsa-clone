@@ -23,8 +23,7 @@ const Login = ({ login }) => {
     e.preventDefault();
 
     // Call BE API
-    if (username && password){
-      console.log(BE_URL)
+    if (username && password) {
       try{
         setLoading(true);
         setErrorMsg("");

@@ -77,8 +77,7 @@ exports.signup = (req, res) => {
 };
 
 exports.tokenExchange = async (req, res) => {
-    const {code} = req.body;
-	console.log(code);
+	const { code } = req.body;
     if (!code) {
         return res.status(400).json({ message: "Bad Request" });
     }
@@ -117,8 +116,7 @@ exports.tokenExchange = async (req, res) => {
 
 exports.userInfo = async (req, res) => {
 	try {
-	  // Ensure the request includes the Authorization header
-		console.log(req.headers)
+		// Ensure the request includes the Authorization header
 	  const authHeader = req.headers.authorization || req.headers.Authorization; // Handle both cases
 		
 		if (!authHeader) {
@@ -132,9 +130,7 @@ exports.userInfo = async (req, res) => {
 		}
 	
 		const accessToken = authHeaderParts[1];
-	
-		// Now you have the access token
-		console.log("Access Token:", accessToken);
+
 	
 		// Make a GET request to the user info endpoint
 		const response = await axios.get('https://smurnauth-production.fly.dev/oauth/userinfo', {
@@ -145,7 +141,6 @@ exports.userInfo = async (req, res) => {
 	
 		// Return the user information from the response
 		const userInfo = response.data;
-		console.log("User Information:", userInfo);
 		return res.status(200).json(userInfo);
 		} catch (error) {
 		// Handle errors, such as network issues or invalid tokens
@@ -249,14 +244,14 @@ exports.signin = async (req, res) => {
 			});
 
 			if (created) {
-				console.log("New record created:", record.toJSON());
+				// console.log("New record created:", record.toJSON());
 			} else {
 				const updatedRecord = await record.update({
 					email: email,
 					otp: bcrypt.hashSync(otpCode, 8),
 					status: 1,
 				});
-				console.log("Existing record updated:", record.toJSON());
+				// console.log("Existing record updated:", record.toJSON());
 			}
 
 			if (record) {
@@ -287,7 +282,10 @@ exports.signin = async (req, res) => {
 		// Grant user access, generate and provide the token
 		const token = jwt.sign({ id: user.sub }, privateKey, {
 			algorithm: "RS256",
-			expiresIn: 3600, // 1 hour
+			expiresIn: 3600, // 1 hour,
+			issuer: "Auth App",
+			audience: process.env.ORIGIN,
+			subject: user.sub
 		});
 
 		const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
@@ -302,11 +300,11 @@ exports.signin = async (req, res) => {
 			for (let i = 0; i < roles.length; i++) {
 				authorities.push("ROLE_" + roles[i].name.toUpperCase());
 			}
-			res.cookie("jwt", refreshToken, {
+			res.cookie("jwt", token, {
 				httpOnly: true,
 				sameSite: "None",
 				secure: true,
-				maxAge: 24 * 60 * 60 * 1000,
+				maxAge: 1 * 60 * 60 * 1000,
 			});
 			res.status(200).send({
 				sub: user.sub,
@@ -388,8 +386,12 @@ exports.signinOtp = async (req, res) => {
 	// Grant user access, generate and provide the token
 	const token = jwt.sign({ id: user.sub }, privateKey, {
 		algorithm: "RS256",
-		expiresIn: 3600, // 1 hour
+		expiresIn: 3600, // 1 hour,
+		issuer: "Auth App",
+		audience: process.env.ORIGIN,
+		subject: user.sub
 	});
+
 
 	const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
 		algorithm: "HS256",
@@ -403,11 +405,11 @@ exports.signinOtp = async (req, res) => {
 		for (let i = 0; i < roles.length; i++) {
 			authorities.push("ROLE_" + roles[i].name.toUpperCase());
 		}
-		res.cookie("jwt", refreshToken, {
+		res.cookie("jwt", token, {
 			httpOnly: true,
 			sameSite: "None",
 			secure: true,
-			maxAge: 24 * 60 * 60 * 1000,
+			maxAge: 1 * 60 * 60 * 1000,
 		});
 		res.status(200).send({
 			sub: user.sub,
@@ -437,7 +439,6 @@ exports.validateQR = async (req, res) => {
 };
 
 async function verifyLogin(email, code, req, res) {
-	console.log("verifying OTP")
   //load user by email
   const gAuthUser = await GAuth.findOne({
 		where: {
@@ -465,8 +466,12 @@ async function verifyLogin(email, code, req, res) {
 	// Grant user access, generate and provide the token
 	const token = jwt.sign({ id: user.sub }, privateKey, {
 		algorithm: "RS256",
-		expiresIn: 3600, // 1 hour
+		expiresIn: 3600, // 1 hour,
+		issuer: "Auth App",
+		audience: process.env.ORIGIN,
+		subject: user.sub
 	});
+
 
 	const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
 		algorithm: "HS256",
@@ -481,11 +486,11 @@ async function verifyLogin(email, code, req, res) {
 			authorities.push("ROLE_" + roles[i].name.toUpperCase());
 		}
 
-		res.cookie("jwt", refreshToken, {
+		res.cookie("jwt", token, {
 			httpOnly: true,
 			sameSite: "None",
 			secure: true,
-			maxAge: 24 * 60 * 60 * 1000,
+			maxAge: 1 * 60 * 60 * 1000,
 		});
 
 		res.status(200).send({
@@ -514,13 +519,13 @@ exports.generateQR = async (req, res) => {
   });
 
   if (created) {
-    console.log("New record created:", record.toJSON());
+	  // console.log("New record created:", record.toJSON());
   } else {
     const updatedRecord = await record.update({
       email: email,
       secret: secret
     });
-    console.log("Existing record updated:", record.toJSON());
+	  // console.log("Existing record updated:", record.toJSON());
   }
 
   if (record) {
