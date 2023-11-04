@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from 'axios';
 
 // To be shifted out
-const BE_URL = "http://127.0.0.1:3001"
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
 
 
 const QRVerification = ({ login }) => {

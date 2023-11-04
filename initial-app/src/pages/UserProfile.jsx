@@ -5,7 +5,7 @@ import axios from "axios";
 const UserProfile = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState()
-  const BE_URL = "http://127.0.0.1:3001";
+  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
   useEffect(() => {
     // alert("OTP is 123456"); 
     if (!localStorage.getItem("user")) {
