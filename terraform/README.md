@@ -36,4 +36,5 @@ $ export AWS_SECRET_ACCESS_KEY=xxx
 - `$ terraform fmt` to format files
 - `$ terraform plan` to gloss over changes made to make sure nothing will break
 - `$ terraform apply` to deploy on AWS
+- `$ terraform show` to show the current state of deployed resources
 - `$ terraform destroy` to terminate instances
