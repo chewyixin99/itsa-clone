@@ -72,17 +72,48 @@ resource "aws_subnet" "tf-public-subnet-2" {
   }
 }
 
-# * VPC INTERNET GATEWAY #################################################
+# * VPC INTERNET #################################################
 resource "aws_internet_gateway" "tf-igw" {
   vpc_id = aws_vpc.tf-vpc-301.id
   tags = {
-    Name = "tf-main"
+    Name = "tf-public-gateway-1"
   }
 }
-
+# * ROUTE TABLES #################################################
+resource "aws_route_table" "tf-public-route-table" {
+  vpc_id = aws_vpc.tf-vpc-301.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.tf-igw.id
+  }
+  tags = {
+    Name      = "tf-public-rtb"
+    Terraform = "true"
+  }
+}
+resource "aws_route_table_association" "tf-public-1" {
+  depends_on     = [aws_subnet.tf-public-subnet-1]
+  route_table_id = aws_route_table.tf-public-route-table.id
+  subnet_id      = aws_subnet.tf-public-subnet-1.id
+}
+resource "aws_route_table_association" "tf-public-2" {
+  depends_on     = [aws_subnet.tf-public-subnet-2]
+  route_table_id = aws_route_table.tf-public-route-table.id
+  subnet_id      = aws_subnet.tf-public-subnet-2.id
+}
+resource "aws_route_table_association" "tf-private-1" {
+  depends_on     = [aws_subnet.tf-private-subnet-1]
+  route_table_id = aws_route_table.tf-public-route-table.id
+  subnet_id      = aws_subnet.tf-private-subnet-1.id
+}
+resource "aws_route_table_association" "tf-private-2" {
+  depends_on     = [aws_subnet.tf-private-subnet-2]
+  route_table_id = aws_route_table.tf-public-route-table.id
+  subnet_id      = aws_subnet.tf-private-subnet-2.id
+}
 # * VPC SECURITY GROUP RULES #################################################
 # * IGW-SG: in from internet, out to FE-ALB-SG
-resource "aws_security_group_rule" "tf-in_igw-sg-https" {
+resource "aws_security_group_rule" "public-https-in" {
   type              = "ingress"
   description       = "in from internet, https"
   from_port         = 443
@@ -91,7 +122,7 @@ resource "aws_security_group_rule" "tf-in_igw-sg-https" {
   security_group_id = aws_security_group.tf-IGW-SG.id
   to_port           = 443
 }
-resource "aws_security_group_rule" "tf-in_igw-sg-http" {
+resource "aws_security_group_rule" "public-http-in" {
   type              = "ingress"
   description       = "in from internet, http"
   from_port         = 80
@@ -99,6 +130,32 @@ resource "aws_security_group_rule" "tf-in_igw-sg-http" {
   cidr_blocks       = ["0.0.0.0/0"]
   security_group_id = aws_security_group.tf-IGW-SG.id
   to_port           = 80
+}
+resource "aws_security_group_rule" "public-out" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.tf-IGW-SG.id
+}
+resource "aws_security_group_rule" "https-out" {
+  type                     = "egress"
+  description              = "out to fe-alb-sg"
+  from_port                = 443
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-FE-ALB-SG.id
+  security_group_id        = aws_security_group.tf-IGW-SG.id
+  to_port                  = 443
+}
+resource "aws_security_group_rule" "http-out" {
+  type                     = "egress"
+  description              = "out to fe-alb-sg"
+  from_port                = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-FE-ALB-SG.id
+  security_group_id        = aws_security_group.tf-IGW-SG.id
+  to_port                  = 80
 }
 # * FE-ALB-SG: in from internet gateway, out to FE-ECS-SG
 resource "aws_security_group_rule" "tf-in_fe-alb-sg-https" {
