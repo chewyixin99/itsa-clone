@@ -4,8 +4,6 @@ const fs = require("fs");
 
 const publicKey = fs.readFileSync('public.key', 'utf8');
 const ssoPublicKey = fs.readFileSync('keys/sso_public_key.pem', 'utf8');
-console.log(publicKey)
-console.log(ssoPublicKey)
 const User = db.user;
 verifyToken = (req, res, next) => {
     let tokenHeader = req.headers.authorization;
