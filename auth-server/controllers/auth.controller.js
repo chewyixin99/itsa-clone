@@ -46,7 +46,7 @@ exports.signup = (req, res) => {
 				password: bcrypt.hashSync(req.body.password, 8),
 				first_name: req.body.first_name,
 				last_name: req.body.last_name,
-				birthdate: req.body.birthdate,
+				// birthdate: req.body.birthdate,
 				status: status,
 			}).then((user) => {
 				if (req.body.roles) {

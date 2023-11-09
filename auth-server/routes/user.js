@@ -10,4 +10,6 @@ router.get("/userinfo", authJwt.verifyToken, controller.userinfo);
 
 router.get("/getallusers", authJwt.verifyToken, authJwt.isModeratorOrAdmin, controller.getAllUsers);
 
+router.patch("/userinfo",  authJwt.verifyToken, controller.editUserInfo)
+
 module.exports = router;
