@@ -77,23 +77,9 @@ resource "aws_security_group" "sg_web" {
 
   # define rules
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
     description = "TLS"
     from_port   = 443
     to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.vpc1.cidr_block]
   }
@@ -103,6 +89,23 @@ resource "aws_security_group" "sg_web" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+}
+resource "aws_security_group" "sg_server" {
+  name        = "sg_db"
+  description = "Database security group"
+  vpc_id      = aws_vpc.vpc1.id
+  tags = {
+    Name = "sg-db"
+  }
+
+  # define rules
+  ingress {
+    description = "incoming from frontend"
+    from_port   = 3000 # todo: port to be changed, match with frontend
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = [aws_vpc.vpc1.cidr_block]
   }
 }
 
@@ -116,36 +119,16 @@ resource "aws_security_group" "sg_db" {
 
   # define rules
   ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  ingress {
-    description = "TLS"
-    from_port   = 443
-    to_port     = 443
+    description = "mysql connection"
+    from_port   = 3306
+    to_port     = 3306
     protocol    = "tcp"
     cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-  egress {
-    description = "Allow all outgoing requests"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 
 # * IAM role #################################################
+# backend service, SCS, db permission
 resource "aws_iam_role" "test_role" {
   name = "test_role"
   assume_role_policy = jsonencode({
@@ -167,6 +150,7 @@ resource "aws_iam_role" "test_role" {
   }
 }
 
+# define later
 resource "aws_iam_role_policy" "test_policy" {
   name = "test_policy"
   role = aws_iam_role.test_role.id
