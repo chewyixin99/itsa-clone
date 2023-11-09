@@ -2,9 +2,9 @@ name: FE Node.js Test
 
 on:
   push:
-    branches: [ "cicd-branch" ]
-  # pull_request:
-  #   branches: [ "main" ]
+    branches: [ "main", "cicd-branch" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   docker-backend-tests:
