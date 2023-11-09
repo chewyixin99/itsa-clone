@@ -60,7 +60,7 @@ const UserManagement = () => {
     return (
         <div className="h-[100vh] p-3 bg-gray-50">
             <h1 className="pt-1 pb-6">User Management</h1>
-            <table className="centered-table text-left min-w-[70vw] max-w-[70vw] w-[70vw]">
+            <table className="centered-table text-left min-w-[95vw] max-w-[95vw] w-[95vw]">
                 <thead>
                     <tr>
                         {isAdmin && (
