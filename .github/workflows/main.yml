@@ -1,0 +1,19 @@
+name: FE Node.js Test
+
+on:
+  push:
+    branches: [ "cicd-branch" ]
+  # pull_request:
+  #   branches: [ "main" ]
+
+jobs:
+  docker-backend-tests:
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+
+    - name: Start containers
+      run: docker-compose -f "auth-server/ci/compose.test.yaml" up -d --build
