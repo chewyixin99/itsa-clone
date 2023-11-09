@@ -3,11 +3,9 @@ const User = db.user
 var jwt = require("jsonwebtoken");
 
 exports.userinfo = (req, res) => {
-    let token = req.headers.authorization.split(" ")[1];
-    let content = jwt.decode(token);
     User.findOne({
         where: {
-            sub: content.id,
+            sub: req.userId,
         },
     }).then((user) => {
         if (!user) {
@@ -15,7 +13,6 @@ exports.userinfo = (req, res) => {
         }
         res.send({
             sub: user.sub,
-
             email: user.email,
             given_name: user.first_name,
             family_name: user.last_name,

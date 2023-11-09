@@ -25,14 +25,14 @@ verifyToken = (req, res, next) => {
                 });
             }
             req.userId = decoded.id;
-            req.roles = decode.roles;
+            req.roles = decoded.roles;
             next();
         });
 };
 
 isAdmin = (req, res, next) => {
     const { roles } = req;
-    if (['ADMIN'].some(role => roles.includes(role))) {
+    if (['admin'].some(role => roles.includes(role))) {
         next();
         return;
     }
@@ -40,7 +40,7 @@ isAdmin = (req, res, next) => {
 
 isModerator = (req, res, next) => {
     const { roles } = req;
-    if (['MODERATOR'].some(role => roles.includes(role))) {
+    if (['moderator'].some(role => roles.includes(role))) {
         next();
         return;
     }
@@ -48,7 +48,7 @@ isModerator = (req, res, next) => {
 
 isModeratorOrAdmin = (req, res, next) => {
     const { roles } = req;
-    if (['ADMIN', 'MODERATOR'].some(role => roles.includes(role))) {
+    if (['admin', 'moderator'].some(role => roles.includes(role))) {
         next();
         return;
     }
