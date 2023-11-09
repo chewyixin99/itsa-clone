@@ -58,13 +58,15 @@ const UserManagement = () => {
   return (
     <div className="h-[100vh] p-3 bg-gray-50">
       <h1 className="pt-1 pb-6">User Management</h1>
-      <table className="centered-table text-left">
+      <table className="centered-table text-left min-w-[70vw] max-w-[70vw] w-[70vw]">
         <thead>
           <tr>
             {isAdmin && (
               <>
                 {userKeys.map((key) => (
-                  <th className="p-3 min-w-[15vw] max-w-[15vw] bg-white border" key={key}>{key}</th>
+                  <th className="p-3 bg-white border" key={key}>
+                    {key}
+                  </th>
                 ))}
                 <th className="p-3">Edit</th>
               </>
@@ -77,10 +79,9 @@ const UserManagement = () => {
               {isAdmin && (
                 <>
                   {userKeys.map((key) => (
-                    <td key={key} className="bg-white p-3 min-w-[15vw] max-w-[15vw] border">
+                    <td key={key} className="bg-white p-3 border">
                       {isEditing && editedUser && editedUser.id === user.id ? (
                         <input
-                        className="w-[13vw]"
                           type="text"
                           value={editedUser[key]}
                           onChange={(e) =>
@@ -105,7 +106,7 @@ const UserManagement = () => {
                       </button>
                     ) : (
                       <button
-                        className={`p-3 mx-2 my-2 custom-button-primary margin-2`}
+                        className={`p-3 mx-2 my-2 custom-button-secondary border margin-2`}
                         onClick={() => handleEditUser(user)}
                       >
                         Edit
