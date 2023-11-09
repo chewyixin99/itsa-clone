@@ -23,3 +23,17 @@ exports.userinfo = (req, res) => {
         });
     });
 };
+
+exports.getAllUsers = (req, res) => {
+    User.findAll({
+        attributes:{exclude: ["password", "createdAt", "updatedAt", "status"]},
+    })
+        .then(users => {
+            res.status(200).json(users);
+        })
+        .catch(error => {
+            console.error(error);
+            res.status(500).json({ message: "Internal Server Error" });
+        });
+};
+

@@ -86,9 +86,9 @@ const initialiseRoles = (Role) => {
     });
 
     Role.findOrCreate({
-        where: { id: 2 },
+        where: { id: 3 },
         defaults: {
-            id: 2, name: "admin"
+            id: 3, name: "admin"
         },
     }).then(([role, created]) => {
         if (created) {
@@ -100,9 +100,9 @@ const initialiseRoles = (Role) => {
         console.error('Error:', error);
     });
     Role.findOrCreate({
-        where: { id: 3 },
+        where: { id: 2 },
         defaults: {
-            id: 3, name: "moderator"
+            id: 2, name: "moderator"
         },
     }).then(([role, created]) => {
         if (created) {

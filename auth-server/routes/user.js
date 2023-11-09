@@ -8,5 +8,6 @@ const controller = require("../controllers/user.controller");
 
 router.get("/userinfo", authJwt.verifyToken, controller.userinfo);
 
+router.get("/getallusers", authJwt.verifyToken, authJwt.isModeratorOrAdmin, controller.getAllUsers);
 
 module.exports = router;

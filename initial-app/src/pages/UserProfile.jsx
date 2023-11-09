@@ -5,6 +5,7 @@ import axios from "axios";
 const UserProfile = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState()
+  const [userRoles, setUserRoles] = useState([]);
   const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
   useEffect(() => {
     // alert("OTP is 123456"); 
@@ -12,11 +13,14 @@ const UserProfile = () => {
       navigate("/login")
     }
     const data = JSON.parse(localStorage.getItem("user"))
+    setUserRoles(data.roles); // Set userRoles
     const token = data.accessToken || data.access_token
     const config = {
       headers: { Authorization: `Bearer ${token}` }
     };
     getUserInfo(config)
+
+
   }, [])
 
   const handleDeleteAccount = async () => {
@@ -43,6 +47,12 @@ const UserProfile = () => {
     }
   };
 
+  const handleAuthorizeUserManagement = () => {
+    if (userRoles.includes("admin") || userRoles.includes("moderator")) {
+      navigate("/user-management"); 
+    }
+  };
+
   const getUserInfo = async (config) => {
     let userInfoResponse;
     if (localStorage.getItem("sso")) {
@@ -61,7 +71,7 @@ const UserProfile = () => {
       {userInfo ? (
         <div>
           <h1>User Profile</h1>
-          <table style={{ border: "2px solid black", padding: "30px", borderRadius: "10px" }}>
+          <table style={{ border: "2px solid black", padding: "10px", borderRadius: "10px", width: "100%", maxWidth: "800px" }}>
             <tbody>
               {Object.entries(userInfo).map(([key, value]) => (
                 <tr key={key}>
@@ -74,6 +84,15 @@ const UserProfile = () => {
           {!localStorage.getItem("sso") &&
             <button className={`p-3 mx-2 my-2 custom-button-primary margin-2`} onClick={handleDeleteAccount}>Delete Account</button>
           }
+          {userRoles.includes("admin") || userRoles.includes("moderator") ? (
+            <button
+              style={{ backgroundColor: 'grey', color: '#fff' }} 
+              className={`p-3 mx-2 my-2 custom-button-primary margin-2`}
+              onClick={handleAuthorizeUserManagement}
+            >
+              User Management
+            </button>
+          ) : null}
         </div>
       ) : (
         <p>No user information available.</p>
