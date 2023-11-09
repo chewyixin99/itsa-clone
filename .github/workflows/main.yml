@@ -71,7 +71,7 @@ jobs:
       - run: ls
       - name: 'Build Application'
         working-directory: ./initial-app
-        run: npm build
+        run: npm run build
 
       - name: Build and push the tagged docker image to Amazon ECR
         env:
