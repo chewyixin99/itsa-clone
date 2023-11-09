@@ -280,26 +280,26 @@ exports.signin = async (req, res) => {
 		});
 
 		// Grant user access, generate and provide the token
-		const token = jwt.sign({ id: user.sub }, privateKey, {
-			algorithm: "RS256",
-			expiresIn: 3600, // 1 hour,
-			issuer: "Auth App",
-			audience: process.env.ORIGIN,
-			subject: user.sub
-		});
-
-		const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
-			algorithm: "HS256",
-			allowInsecureKeySizes: true,
-			expiresIn: 86400, // 24 hours
-		});
-
-		var authorities = [];
+		const authorities = [];
 
 		user.getRoles().then((roles) => {
 			for (let i = 0; i < roles.length; i++) {
-				authorities.push("ROLE_" + roles[i].name.toUpperCase());
+				authorities.push(roles[i].name);
 			}
+			const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+				algorithm: "RS256",
+				expiresIn: 3600, // 1 hour,
+				issuer: "Auth App",
+				audience: process.env.ORIGIN,
+				subject: user.sub
+			});
+
+			const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
+				algorithm: "HS256",
+				allowInsecureKeySizes: true,
+				expiresIn: 86400, // 24 hours
+			});
+
 			res.cookie("jwt", token, {
 				httpOnly: true,
 				sameSite: "None",
@@ -383,28 +383,26 @@ exports.signinOtp = async (req, res) => {
 		},
 	});
 
-	// Grant user access, generate and provide the token
-	const token = jwt.sign({ id: user.sub }, privateKey, {
-		algorithm: "RS256",
-		expiresIn: 3600, // 1 hour,
-		issuer: "Auth App",
-		audience: process.env.ORIGIN,
-		subject: user.sub
-	});
-
-
-	const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
-		algorithm: "HS256",
-		allowInsecureKeySizes: true,
-		expiresIn: 86400, // 24 hours
-	});
-
-	var authorities = [];
+	const authorities = [];
 
 	user.getRoles().then((roles) => {
 		for (let i = 0; i < roles.length; i++) {
-			authorities.push("ROLE_" + roles[i].name.toUpperCase());
+			authorities.push(roles[i].name);
 		}
+		const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+			algorithm: "RS256",
+			expiresIn: 3600, // 1 hour,
+			issuer: "Auth App",
+			audience: process.env.ORIGIN,
+			subject: user.sub
+		});
+
+		const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
+			algorithm: "HS256",
+			allowInsecureKeySizes: true,
+			expiresIn: 86400, // 24 hours
+		});
+
 		res.cookie("jwt", token, {
 			httpOnly: true,
 			sameSite: "None",
@@ -419,7 +417,7 @@ exports.signinOtp = async (req, res) => {
 			accessToken: token,
 		});
 	});
-};
+}
 
 exports.validateQR = async (req, res) => {
   const { email, code } = req.body
@@ -463,28 +461,26 @@ async function verifyLogin(email, code, req, res) {
 		},
 	});
 
-	// Grant user access, generate and provide the token
-	const token = jwt.sign({ id: user.sub }, privateKey, {
-		algorithm: "RS256",
-		expiresIn: 3600, // 1 hour,
-		issuer: "Auth App",
-		audience: process.env.ORIGIN,
-		subject: user.sub
-	});
-
-
-	const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
-		algorithm: "HS256",
-		allowInsecureKeySizes: true,
-		expiresIn: 86400, // 24 hours
-	});
 
 	var authorities = [];
-  
+
 	user.getRoles().then((roles) => {
 		for (let i = 0; i < roles.length; i++) {
-			authorities.push("ROLE_" + roles[i].name.toUpperCase());
+			authorities.push(roles[i].name);
 		}
+		const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+			algorithm: "RS256",
+			expiresIn: 3600, // 1 hour,
+			issuer: "Auth App",
+			audience: process.env.ORIGIN,
+			subject: user.sub
+		});
+
+		const refreshToken = jwt.sign({ id: user.sub }, process.env.REFRESHSECRET, {
+			algorithm: "HS256",
+			allowInsecureKeySizes: true,
+			expiresIn: 86400, // 24 hours
+		});
 
 		res.cookie("jwt", token, {
 			httpOnly: true,
@@ -492,7 +488,6 @@ async function verifyLogin(email, code, req, res) {
 			secure: true,
 			maxAge: 1 * 60 * 60 * 1000,
 		});
-
 		res.status(200).send({
 			sub: user.sub,
 			username: user.username,

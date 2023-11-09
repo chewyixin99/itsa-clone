@@ -137,7 +137,7 @@ const initialiseDemoUsers = async (User, Role) => {
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "User",
-            birthdate: "10/10/10",
+            birthdate: "2010-10-10",
             status: "valid",
         }).then((user) => {
             // user role = 1
@@ -152,7 +152,7 @@ const initialiseDemoUsers = async (User, Role) => {
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "Moderator",
-            birthdate: "11/11/11",
+            birthdate: "2011-11-11",
             status: "valid",
         }).then((user) => {
             console.log("AAAAAAAAAAAA")
@@ -168,7 +168,7 @@ const initialiseDemoUsers = async (User, Role) => {
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "Admin",
-            birthdate: "12/12/12",
+            birthdate: "2012-12-12",
             status: "valid",
         }).then((user) => {
             // user role = 1
