@@ -29,5 +29,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
+      - run: cd auth-server
       - run: npm ci
       - run: npm test
