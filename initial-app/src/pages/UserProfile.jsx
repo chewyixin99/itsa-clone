@@ -65,6 +65,11 @@ const UserProfile = () => {
       setUserInfo({ ...respData });
     }
   };
+  const capitalizeAndReplaceUnderscores = (key) => {
+    return key
+      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // Capitalize the first letter
+  };
   return (
     <div className="h-[100vh] p-3 bg-gray-50">
       {userInfo ? (
@@ -72,13 +77,14 @@ const UserProfile = () => {
           <h1 className="pt-1 pb-6">User Profile</h1>
           <div className="max-w-[50vw] bg-white">
             {Object.entries(userInfo).map(([key, value]) => {
+              
               return (
                 <div
                   className="flex items-center justify-between border-2"
                   key={key}
                 >
                   <div className="font-semibold min-w-[10vw] border-r-2 p-3">
-                    {key}
+                    {capitalizeAndReplaceUnderscores(key)}
                   </div>
                   <div className="min-w-[40vw] p-3">{value}</div>
                 </div>
