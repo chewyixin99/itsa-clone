@@ -6,6 +6,8 @@ const UserProfile = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState();
   const [userRoles, setUserRoles] = useState([]);
+  const [isEditing, setIsEditing] = useState(false); // Edit mode state
+  const [editedUserInfo, setEditedUserInfo] = useState({}); // Store edited user info
   const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
     import.meta.env.VITE_BACKEND_PORT
   }`;
@@ -70,14 +72,67 @@ const UserProfile = () => {
       .replace(/_/g, ' ') // Replace underscores with spaces
       .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // Capitalize the first letter
   };
+  const handleToggleEdit = () => {
+    // Toggle edit mode
+    if (!isEditing) {
+      // Entering edit mode, populate editedUserInfo with current user info
+      setEditedUserInfo({ ...userInfo });
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveUserInfo = async () => {
+    try {
+      // Make a PATCH request to update user info
+      const data = JSON.parse(localStorage.getItem("user"));
+      const token = data.accessToken || data.access_token;
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json", // Set the content type to JSON
+        },
+      };
+      console.log(editedUserInfo);
+      // Send a PATCH request to update the user information
+      //const response = await axios.patch(`${BE_URL}/user/updateinfo`, editedUserInfo, config);
+      
+      if (response.status === 200) {
+        // Update the userInfo state with the edited user information
+        setUserInfo({ ...editedUserInfo });
+        setIsEditing(false);
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error saving user info:", error);
+      // Handle any error conditions here
+    }
+  };
+  
+  const handleCancelEdit = () => {
+    // Exit edit mode
+    setIsEditing(false);
+  };
   return (
     <div className="h-[100vh] p-3 bg-gray-50">
       {userInfo ? (
         <div>
           <h1 className="pt-1 pb-6">User Profile</h1>
           <div className="max-w-[50vw] bg-white">
-            {Object.entries(userInfo).map(([key, value]) => {
-              
+          {Object.entries(userInfo).map(([key, value]) => {
+              // Check if the key is "sub" or "email"
+              if (key === "sub" || key === "email") {
+                return (
+                  <div
+                    className="flex items-center justify-between border-2"
+                    key={key}
+                  >
+                    <div className="font-semibold min-w-[10vw] border-r-2 p-3">
+                      {capitalizeAndReplaceUnderscores(key)}
+                    </div>
+                    <div className="min-w-[40vw] p-3">{value}</div>
+                  </div>
+                );
+              }
               return (
                 <div
                   className="flex items-center justify-between border-2"
@@ -86,7 +141,23 @@ const UserProfile = () => {
                   <div className="font-semibold min-w-[10vw] border-r-2 p-3">
                     {capitalizeAndReplaceUnderscores(key)}
                   </div>
-                  <div className="min-w-[40vw] p-3">{value}</div>
+                  <div className="min-w-[40vw] p-3">
+                    {isEditing ? (
+                      <input
+                        className="w-full"
+                        type="text"
+                        value={editedUserInfo[key]}
+                        onChange={(e) =>
+                          setEditedUserInfo({
+                            ...editedUserInfo,
+                            [key]: e.target.value,
+                          })
+                        }
+                      />
+                    ) : (
+                      value
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -107,6 +178,30 @@ const UserProfile = () => {
               >
                 User Management
               </button>
+            ) : null}
+            {userRoles.includes("admin") ||
+            userRoles.includes("moderator") ||
+            userRoles.includes("user") ? (
+              <div>
+                {isEditing ? (
+                  <button
+                    className={`p-3 mx-2 my-2 custom-button-secondary`}
+                    onClick={handleCancelEdit}
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+                <button
+                  className={`p-3 mx-2 my-2 ${
+                    isEditing
+                      ? "custom-button-primary"
+                      : "custom-button-secondary"
+                  }`}
+                  onClick={isEditing ? handleSaveUserInfo : handleToggleEdit}
+                >
+                  {isEditing ? "Save" : "Edit"}
+                </button>
+              </div>
             ) : null}
           </div>
         </div>
