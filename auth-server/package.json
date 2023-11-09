@@ -6,7 +6,9 @@
     "scripts": {
         "test": "jest",
         "start": "nodemon --env-file=.env index.js",
-        "prod": "node --env-file=.env index.js"
+        "prod": "node --env-file=.env index.js",
+        "citest": "docker compose -f ci/compose.test.yaml up --build -d",
+        "endcitest": "docker compose -f ci/compose.test.yaml down"
     },
     "author": "",
     "license": "ISC",
