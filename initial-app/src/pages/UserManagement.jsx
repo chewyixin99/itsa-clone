@@ -56,17 +56,17 @@ const UserManagement = () => {
   const userKeys = users.length > 0 ? Object.keys(users[0]) : [];
 
   return (
-    <div>
-      <h1>User Management</h1>
-      <table className="centered-table">
+    <div className="h-[100vh] p-3 bg-gray-50">
+      <h1 className="pt-1 pb-6">User Management</h1>
+      <table className="centered-table text-left">
         <thead>
           <tr>
             {isAdmin && (
               <>
                 {userKeys.map((key) => (
-                  <th key={key}>{key}</th>
+                  <th className="p-3 min-w-[15vw] max-w-[15vw] bg-white border" key={key}>{key}</th>
                 ))}
-                <th>Edit</th>
+                <th className="p-3">Edit</th>
               </>
             )}
           </tr>
@@ -77,9 +77,10 @@ const UserManagement = () => {
               {isAdmin && (
                 <>
                   {userKeys.map((key) => (
-                    <td key={key}>
+                    <td key={key} className="bg-white p-3 min-w-[15vw] max-w-[15vw] border">
                       {isEditing && editedUser && editedUser.id === user.id ? (
                         <input
+                        className="w-[13vw]"
                           type="text"
                           value={editedUser[key]}
                           onChange={(e) =>
