@@ -30,9 +30,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
-
+      - run: ls
       - name: Set working directory for Node.js test
-        run: cd ./auth-server
+        
+        run: cd auth-server
         working-directory: ./auth-server
 
       - name: Install dependencies
