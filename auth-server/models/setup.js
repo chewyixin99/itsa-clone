@@ -1,4 +1,5 @@
 const mysql = require("mysql2/promise")
+require("dotenv").config(); // Load environment variables
 
 const createDatabaseIfNotExists = async (config) => {
     const connection = await mysql.createConnection({
@@ -33,14 +34,13 @@ let config = [
 ]
 if (process.env.NODE_ENV) {
     config = [
-        "testdb",
-        "root",
-        "password",
+        process.env.TESTDATABASE || "testdb",
+        process.env.TESTDBUSER || "root",
+        process.env.TESTDBPASSWORD || "password",
         {
-            host: "localhost",
-            dialect: "mysql"
+            host: process.env.TESTDBHOST || "localhost",
+            dialect: process.env.TESTDBDIALECT || "mysql"
         }
     ]
 }
-
 module.exports = { config, createDatabaseIfNotExists }

@@ -1,21 +1,18 @@
 services:
   # ####################################
-  # # mongo database  
+  # # mysql database  
   # ####################################
-  mongo:
-    image: mongo
+  mysql:
+    image: mysql
     environment:
-      MONGO_INITDB_ROOT_USERNAME: user
-      MONGO_INITDB_ROOT_PASSWORD: pass
+      MYSQL_ROOT_PASSWORD: password
 
   ##################################
-  # Jest on video service
+  # Jest on authentication
   ##################################
-  video-tests:
+  authentication-tests:
     build:
       context: ../
       dockerfile: ci/Dockerfile.test
     depends_on:
-      - mongo
-    environment:
-      MONGO_URI: mongodb://user:pass@localhost:27017/?retryWrites=true&w=majority
+      - mysql

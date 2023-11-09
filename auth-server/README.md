@@ -11,3 +11,15 @@
 After cloning the repo, run `$ npm install` to install the dependencies.
 
 To launch the app, run `$ npm start` in your terminal, app will be hosted on `localhost:3001`
+
+
+# Run test instructions
+
+With docker 
+To start:
+docker compose -f ci/compose.test.yaml up --build
+After completing:
+docker compose -f ci/compose.test.yaml down
+
+Without docker
+npm test
