@@ -27,6 +27,6 @@ router.delete("/deleteaccount", authJwt.verifyToken, controller.deleteAccount);
 
 router.post("/tokenExchange", controller.tokenExchange)
 
-router.get("/userinfo", controller.userInfo)
+router.get("/userinfo", authJwt.verifyToken, controller.userInfo)
 
 module.exports = router;
