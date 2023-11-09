@@ -29,15 +29,12 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
-      - run: ls
-      - name: Set working directory for Node.js test
-        
-        run: cd auth-server
-        working-directory: ./auth-server
+          node-version: '20.8'
 
       - name: Install dependencies
+        working-directory: ./auth-server
         run: npm ci
 
       - name: Run tests
+        working-directory: ./auth-server
         run: npm test
