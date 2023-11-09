@@ -25,65 +25,33 @@ verifyToken = (req, res, next) => {
                 });
             }
             req.userId = decoded.id;
+            req.roles = decode.roles;
             next();
         });
 };
 
 isAdmin = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "admin") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Admin Role!"
-            });
-            return;
-        });
-    });
+    const { roles } = req;
+    if (['ADMIN'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 isModerator = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "moderator") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Moderator Role!"
-            });
-        });
-    });
+    const { roles } = req;
+    if (['MODERATOR'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 isModeratorOrAdmin = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "moderator") {
-                    next();
-                    return;
-                }
-
-                if (roles[i].name === "admin") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Moderator or Admin Role!"
-            });
-        });
-    });
+    const { roles } = req;
+    if (['ADMIN', 'MODERATOR'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 const authJwt = {
