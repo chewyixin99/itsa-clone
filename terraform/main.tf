@@ -17,115 +17,290 @@ provider "aws" {
   region = "ap-southeast-1"
 }
 
-
-# * VPC and subnets #################################################
-resource "aws_vpc" "vpc1" {
-  cidr_block = "10.0.0.0/16" # changeable
+# terraform import <resource>.<resource_name> <resource_ID>
+# * VPC #################################################
+resource "aws_vpc" "tf-vpc-301" {
+  cidr_block = "10.0.0.0/24"
   tags = {
-    Name = "vpc1"
+    "Name" = "tf-vpc-301"
   }
 }
 
-resource "aws_subnet" "subnet_public_1" {
-  vpc_id                  = aws_vpc.vpc1.id
-  cidr_block              = "10.0.0.0/18"
-  availability_zone       = "ap-southeast-1a"
-  map_public_ip_on_launch = true
+# * VPC SUBNETS #################################################
+resource "aws_subnet" "tf-private-subnet-1" {
+  vpc_id            = aws_vpc.tf-vpc-301.id
+  cidr_block        = "10.0.0.128/26"
+  availability_zone = "ap-southeast-1a"
   tags = {
-    Name = "subnet_public_1"
+    "Name" = "tf-private-subnet-1"
+  }
+  tags_all = {
+    "Name" = "tf-private-subnet-1"
+  }
+}
+resource "aws_subnet" "tf-private-subnet-2" {
+  vpc_id            = aws_vpc.tf-vpc-301.id
+  cidr_block        = "10.0.0.192/26"
+  availability_zone = "ap-southeast-1b"
+  tags = {
+    "Name" = "tf-private-subnet-2"
+  }
+  tags_all = {
+    "Name" = "tf-private-subnet-2"
+  }
+}
+resource "aws_subnet" "tf-public-subnet-1" {
+  vpc_id            = aws_vpc.tf-vpc-301.id
+  cidr_block        = "10.0.0.0/26"
+  availability_zone = "ap-southeast-1a"
+  tags = {
+    "Name" = "tf-public-subnet-1"
+  }
+  tags_all = {
+    "Name" = "tf-public-subnet-1"
+  }
+}
+resource "aws_subnet" "tf-public-subnet-2" {
+  vpc_id            = aws_vpc.tf-vpc-301.id
+  availability_zone = "ap-southeast-1b"
+  cidr_block        = "10.0.0.64/26"
+  tags = {
+    "Name" = "tf-public-subnet-2"
+  }
+  tags_all = {
+    "Name" = "tf-public-subnet-2"
   }
 }
 
-resource "aws_subnet" "subnet_public_2" {
-  vpc_id                  = aws_vpc.vpc1.id
-  cidr_block              = "10.0.80.0/22"
-  availability_zone       = "ap-southeast-1b"
-  map_public_ip_on_launch = true
+# * VPC INTERNET GATEWAY #################################################
+resource "aws_internet_gateway" "tf-igw" {
+  vpc_id = aws_vpc.tf-vpc-301.id
   tags = {
-    Name = "subnet_public_2"
+    Name = "tf-main"
   }
 }
 
-resource "aws_subnet" "subnet_private_1" {
-  vpc_id                  = aws_vpc.vpc1.id
-  cidr_block              = "10.0.64.0/20"
-  availability_zone       = "ap-southeast-1a"
-  map_public_ip_on_launch = false
-  tags = {
-    Name = "subnet_private_1"
-  }
+# * VPC SECURITY GROUP RULES #################################################
+# * IGW-SG: in from internet, out to FE-ALB-SG
+resource "aws_security_group_rule" "tf-in_igw-sg-https" {
+  type              = "ingress"
+  description       = "in from internet, https"
+  from_port         = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.tf-IGW-SG.id
+  to_port           = 443
+}
+resource "aws_security_group_rule" "tf-in_igw-sg-http" {
+  type              = "ingress"
+  description       = "in from internet, http"
+  from_port         = 80
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.tf-IGW-SG.id
+  to_port           = 80
+}
+# * FE-ALB-SG: in from internet gateway, out to FE-ECS-SG
+resource "aws_security_group_rule" "tf-in_fe-alb-sg-https" {
+  type                     = "ingress"
+  description              = "in from internet gateway, https"
+  from_port                = 443
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-IGW-SG.id
+  security_group_id        = aws_security_group.tf-FE-ALB-SG.id
+  to_port                  = 443
+}
+resource "aws_security_group_rule" "tf-in_fe-alb-sg-http" {
+  type                     = "ingress"
+  description              = "in from internet gateway, http"
+  from_port                = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-IGW-SG.id
+  security_group_id        = aws_security_group.tf-FE-ALB-SG.id
+  to_port                  = 80
+}
+resource "aws_security_group_rule" "tf-out_fe-alb-sg" {
+  type                     = "egress"
+  description              = "out to fe-ecs-sg"
+  from_port                = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-FE-ECS-SG.id
+  security_group_id        = aws_security_group.tf-FE-ALB-SG.id
+  to_port                  = 80
+}
+# * FE-ECS-SG: in from FE-ALB-SG, out to BE-ALG-SG
+resource "aws_security_group_rule" "tf-in_fe-ecs-sg" {
+  type                     = "ingress"
+  description              = "in from fe-alb-sg"
+  from_port                = 80
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-FE-ALB-SG.id
+  security_group_id        = aws_security_group.tf-FE-ECS-SG.id
+  to_port                  = 80
+}
+resource "aws_security_group_rule" "tf-out_fe-ecs-sg" {
+  type                     = "egress"
+  description              = "out to be-alb-sg"
+  from_port                = 3001
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-BE-ALB-SG.id
+  security_group_id        = aws_security_group.tf-FE-ECS-SG.id
+  to_port                  = 3001
+}
+# * BE-ALB-SG: in from FE-ECS-SG, out to BE-ECS-SG
+resource "aws_security_group_rule" "tf-in_be-alb-sg" {
+  type                     = "ingress"
+  description              = "in from fe-ecs-sg"
+  from_port                = 3001
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-FE-ECS-SG.id
+  security_group_id        = aws_security_group.tf-BE-ALB-SG.id
+  to_port                  = 3001
+}
+resource "aws_security_group_rule" "tf-out_be-alb-sg" {
+  type                     = "egress"
+  description              = "out to be-ecs-sg"
+  from_port                = 3001
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-BE-ECS-SG.id
+  security_group_id        = aws_security_group.tf-BE-ALB-SG.id
+  to_port                  = 3001
+}
+# * BE-ECS-SG: in from BE-ALB-SG, out to DB-SG
+resource "aws_security_group_rule" "tf-in_be-ecs-sg" {
+  type                     = "ingress"
+  description              = "in from be-alb-sg"
+  from_port                = 3001
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-BE-ALB-SG.id
+  security_group_id        = aws_security_group.tf-BE-ECS-SG.id
+  to_port                  = 3001
+}
+resource "aws_security_group_rule" "tf-out_be-ecs-sg" {
+  type                     = "egress"
+  description              = "out to db-sg"
+  from_port                = 3306
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-DB-SG.id
+  security_group_id        = aws_security_group.tf-BE-ECS-SG.id
+  to_port                  = 3306
+}
+# * DB-SG: in from BE-ECS-SG, no egress
+resource "aws_security_group_rule" "tf-in_db-sg" {
+  type                     = "ingress"
+  description              = "in from be-ecs-sg"
+  from_port                = 3306
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.tf-BE-ECS-SG.id
+  security_group_id        = aws_security_group.tf-DB-SG.id
+  to_port                  = 3306
 }
 
-resource "aws_subnet" "subnet_private_2" {
-  vpc_id                  = aws_vpc.vpc1.id
-  cidr_block              = "10.0.84.0/24"
-  availability_zone       = "ap-southeast-1b"
-  map_public_ip_on_launch = false
-  tags = {
-    Name = "subnet_private_2"
-  }
+# * VPC SECURITY GROUPS #################################################
+resource "aws_security_group" "tf-IGW-SG" {
+  name        = "tf-IGW-SG"
+  description = "Managed by Terraform - in from internet, out to fe-alb"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_security_group" "tf-FE-ALB-SG" {
+  name        = "tf-FE-ALB-SG"
+  description = "Managed by Terraform - in from internet gateway, out to fe-ecs"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_security_group" "tf-FE-ECS-SG" {
+  name        = "tf-FE-ECS-SG"
+  description = "Managed by Terraform - in from fe-alb-sg, out to be-alb-sg"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_security_group" "tf-BE-ALB-SG" {
+  name        = "tf-BE-ALB-SG"
+  description = "Managed by Terraform - in from fe-ecs-sg, out to be-ecs-sg"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_security_group" "tf-BE-ECS-SG" {
+  name        = "tf-BE-ECS-SG"
+  description = "Managed by Terraform - in from be-alb-sg, out to db-sg"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_security_group" "tf-DB-SG" {
+  name        = "tf-DB-SG"
+  description = "Managed by Terraform - in from be-ecs-sg"
+  vpc_id      = aws_vpc.tf-vpc-301.id
 }
 
-# * Security group for VPC #################################################
-resource "aws_security_group" "sg_web" {
-  name        = "sg_web"
-  description = "Web app security group"
-  vpc_id      = aws_vpc.vpc1.id
-  tags = {
-    Name = "sg-web"
-  }
 
-  # define rules
-  ingress {
-    description = "TLS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-  egress {
-    description = "Allow all outgoing requests"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-resource "aws_security_group" "sg_server" {
-  name        = "sg_server"
-  description = "Server security group"
-  vpc_id      = aws_vpc.vpc1.id
-  tags = {
-    Name = "sg-db"
-  }
+# * ECS cluster #################################################
+# resource "aws_ecs_cluster" "tf-ecs-cluster" {
+#   name = "tf-ecs-cluster"
+#   setting {
+#     name  = "containerInsights"
+#     value = "enabled"
+#   }
+# }
 
-  # define rules
-  ingress {
-    description = "incoming from frontend"
-    from_port   = 3000 # todo: port to be changed, match with frontend
-    to_port     = 3000
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-}
+# todo: change when docker is up
+# resource "aws_ecs_task_definition" "web-app-service" {
+#   family = "service"
+#   container_definitions = jsonencode([
+#     {
+#       name      = "first"
+#       image     = "service-first"
+#       cpu       = 10
+#       memory    = 512
+#       essential = true
+#       portMappings = [
+#         {
+#           containerPort = 80
+#           hostPort      = 80
+#         }
+#       ]
+#     },
+#     {
+#       name      = "second"
+#       image     = "service-second"
+#       cpu       = 10
+#       memory    = 256
+#       essential = true
+#       portMappings = [
+#         {
+#           containerPort = 443
+#           hostPort      = 443
+#         }
+#       ]
+#     }
+#   ])
+#   volume {
+#     name      = "service-storage"
+#     host_path = "/ecs/service-storage"
+#   }
+#   placement_constraints {
+#     type       = "memberOf"
+#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
+#   }
+# }
 
-resource "aws_security_group" "sg_db" {
-  name        = "sg_db"
-  description = "Database security group"
-  vpc_id      = aws_vpc.vpc1.id
-  tags = {
-    Name = "sg-db"
-  }
+# * Load balancer #################################################
+# resource "aws_lb" "load_balancer_1" {
+#   name               = "test-lb-tf"
+#   internal           = false
+#   load_balancer_type = "application"
+#   security_groups    = [aws_security_group.sg_web.id] # may need to create a new sg_lb for load balancer
+#   subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
 
-  # define rules
-  ingress {
-    description = "mysql connection"
-    from_port   = 3306
-    to_port     = 3306
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.vpc1.cidr_block]
-  }
-}
+#   enable_deletion_protection = false
+#   # access_logs {
+#   #   bucket = aws_s3_bucket.lb_logs.id
+#   #   prefix = "test-lb"
+#   #   enabled = true
+#   # }
+# }
+
+# resource "aws_lb_target_group" "lb_target_group_1" {
+#   name     = "tf-example-lb-tg"
+#   port     = 80
+#   protocol = "HTTP"
+#   vpc_id   = aws_vpc.vpc1.id
+# }
 
 # * IAM role #################################################
 # backend service, SCS, db permission
@@ -169,100 +344,6 @@ resource "aws_security_group" "sg_db" {
 #   })
 # }
 
-# * Load balancer #################################################
-# resource "aws_lb" "load_balancer_1" {
-#   name               = "test-lb-tf"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = [aws_security_group.sg_web.id] # may need to create a new sg_lb for load balancer
-#   subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
-
-#   enable_deletion_protection = false
-#   # access_logs {
-#   #   bucket = aws_s3_bucket.lb_logs.id
-#   #   prefix = "test-lb"
-#   #   enabled = true
-#   # }
-# }
-
-# resource "aws_lb_target_group" "lb_target_group_1" {
-#   name     = "tf-example-lb-tg"
-#   port     = 80
-#   protocol = "HTTP"
-#   vpc_id   = aws_vpc.vpc1.id
-# }
-
-# * ECS cluster #################################################
-# resource "aws_ecs_cluster" "ecs_cluster_1" {
-#   name = "ecs_cluster_1"
-#   setting {
-#     name  = "containerInsights"
-#     value = "enabled"
-#   }
-# }
-
-# * todo: change when docker is up
-# resource "aws_ecs_task_definition" "web-app-service" {
-#   family = "service"
-#   container_definitions = jsonencode([
-#     {
-#       name      = "first"
-#       image     = "service-first"
-#       cpu       = 10
-#       memory    = 512
-#       essential = true
-#       portMappings = [
-#         {
-#           containerPort = 80
-#           hostPort      = 80
-#         }
-#       ]
-#     },
-#     {
-#       name      = "second"
-#       image     = "service-second"
-#       cpu       = 10
-#       memory    = 256
-#       essential = true
-#       portMappings = [
-#         {
-#           containerPort = 443
-#           hostPort      = 443
-#         }
-#       ]
-#     }
-#   ])
-#   volume {
-#     name      = "service-storage"
-#     host_path = "/ecs/service-storage"
-#   }
-#   placement_constraints {
-#     type       = "memberOf"
-#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
-#   }
-# }
-
-# resource "aws_ecs_service" "web-app" {
-#   name            = "web-app-ui"
-#   cluster         = aws_ecs_cluster.ecs_cluster_1.id
-#   task_definition = aws_ecs_task_definition.web-app-service.arn
-#   desired_count   = 1
-#   iam_role        = aws_iam_role.test_role.arn
-#   depends_on      = [aws_iam_role_policy.test_policy]
-#   ordered_placement_strategy {
-#     type  = "binpack"
-#     field = "cpu"
-#   }
-#   load_balancer {
-#     target_group_arn = aws_lb_target_group.lb_target_group_1.arn
-#     container_name   = "web-app"
-#     container_port   = 80
-#   }
-#   placement_constraints {
-#     type       = "memberOf"
-#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
-#   }
-# }
 
 # * ASG auto scaling group #################################################
 # todo: uncomment once launch configuration specified
@@ -279,41 +360,6 @@ resource "aws_security_group" "sg_db" {
 #     value               = "web-instance"
 #     propagate_at_launch = true
 #   }
-# }
-
-# * Aurora #################################################
-# resource "aws_db_subnet_group" "db_subnet_group_aurora" {
-#   name       = "aurora db subnet group"
-#   subnet_ids = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_private_1.id, aws_subnet.subnet_public_2.id, aws_subnet.subnet_private_2.id]
-
-#   tags = {
-#     Name = "My DB subnet group"
-#   }
-# }
-
-# * Aurora cluster
-# resource "aws_rds_cluster" "rds_cluster_aurora" {
-#   cluster_identifier          = "aurora-cluster"
-#   engine                      = "aurora-mysql"
-#   availability_zones          = ["ap-southeast-1a", "ap-southeast-1b"]
-#   database_name               = "mysqldb"
-#   master_username             = "admin"
-#   manage_master_user_password = true
-#   backup_retention_period     = 0
-#   vpc_security_group_ids      = [aws_security_group.sg_db.id]
-#   db_subnet_group_name        = aws_db_subnet_group.db_subnet_group_aurora.name
-#   apply_immediately           = true
-#   skip_final_snapshot         = true
-# }
-
-# * Aurora instance
-# resource "aws_rds_cluster_instance" "cluster_instances" {
-#   count              = 1
-#   identifier         = "aurora-cluster-${count.index}"
-#   cluster_identifier = aws_rds_cluster.rds_cluster_aurora.id
-#   instance_class     = "db.r5.large"
-#   engine             = aws_rds_cluster.rds_cluster_aurora.engine
-#   engine_version     = aws_rds_cluster.rds_cluster_aurora.engine_version
 # }
 
 # * Internet Gateway #################################################
