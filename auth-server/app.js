@@ -8,7 +8,6 @@ const Op = db.Sequelize.Op;
 var bcrypt = require("bcryptjs");
 const { config, createDatabaseIfNotExists } = require("./models/setup")
 
-
 const corsOptions = {
     origin: process.env.ORIGIN
     // origin: "*"
@@ -36,7 +35,19 @@ const initialiseUserRecords = (UserRecord) => {
         }
     }).users
 
+    if (process.env.NODE_ENV) {
+        // UserRecord.create({
+        //     sub: "testsub1",
+        //     email: "test@email.com",
+        //     first_name: "test",
+        //     last_name: "user",
+        //     status: "valid",
+        //     birthdate: "1999-9-9"
+        // })
+        return
+    } 
     UserRecord.count().then(count=>{
+
         if (count <= 0){
             userRecords.map((record) => {
                 // console.log((record.F.getMonth()))
@@ -120,7 +131,7 @@ const initialiseDemoUsers = async (User, Role) => {
         }
     })
     if (!user1) {
-        User.create({
+        await User.create({
             sub: "testsub1",
             email: "demouser@example.com",
             password: bcrypt.hashSync("password", 8),
@@ -135,7 +146,7 @@ const initialiseDemoUsers = async (User, Role) => {
         });
     }
     if (!user2) {
-        User.create({
+        await User.create({
             sub: "testsub2",
             email: "demomod@example.com",
             password: bcrypt.hashSync("password", 8),
@@ -144,13 +155,14 @@ const initialiseDemoUsers = async (User, Role) => {
             birthdate: "11/11/11",
             status: "valid",
         }).then((user) => {
+            console.log("AAAAAAAAAAAA")
             // user role = 1
             user.setAuthTypes(3);
             user.setRoles([1, 2]);
         });
     }
     if (!user3) {
-        User.create({
+        await User.create({
             sub: "testsub3",
             email: "demoadmin@example.com",
             password: bcrypt.hashSync("password", 8),
@@ -215,11 +227,10 @@ const initialiseAuthType = (AuthType) => {
 const init = async () => {
     await createDatabaseIfNotExists(config)
     await db.sequelize.sync()
-    initialiseRoles(db.role)
-    initialiseUserRecords(db.userRecord)
-    initialiseAuthType(db.authType)
-    initialiseDemoUsers(db.user, db.role)
+    await Promise.all([initialiseRoles(db.role),
+    initialiseUserRecords(db.userRecord),
+    initialiseAuthType(db.authType),
+    initialiseDemoUsers(db.user, db.role)])
 }
-
 module.exports = { app, init }
 

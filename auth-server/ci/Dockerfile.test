@@ -1,7 +1,11 @@
 FROM node:20
-WORKDIR /usr/src/app
+# Set the working directory to /usr/src/app
+WORKDIR /app
+COPY ci/wait-for-it.sh ./
 COPY package*.json ./
 RUN npm install
 COPY . .
-EXPOSE 3000
-CMD npm test
+COPY ci/test.env ./.env
+EXPOSE 3003
+RUN chmod +x wait-for-it.sh
+CMD ./wait-for-it.sh mysql:3306 -- npm test
