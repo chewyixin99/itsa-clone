@@ -53,18 +53,19 @@ exports.getAllUsers = (req, res) => {
 exports.getAllUsers = (req, res) => {
   User.findAll({
     attributes: {
-      include: [
-        [
-          Sequelize.fn(
-            "CONCAT",
-            Sequelize.col("first_name"),
-            " ",
-            Sequelize.col("last_name")
-          ),
-          "Name",
-        ],
-      ],
-      exclude: ["password", "id", "first_name", "last_name"], // Fields to exclude
+      // include: [
+      //   [
+      //     Sequelize.fn(
+      //       "CONCAT",
+      //       Sequelize.col("first_name"),
+      //       " ",
+      //       Sequelize.col("last_name")
+      //     ),
+      //     "Name",
+      //   ],
+      // ],
+      // exclude: ["password", "id", "first_name", "last_name"], // Fields to exclude
+      exclude: ["password", "id"]
     },
   })
     .then((users) => {
