@@ -417,7 +417,7 @@ exports.signinOtp = async (req, res) => {
 			accessToken: token,
 		});
 	});
-}
+};
 
 exports.validateQR = async (req, res) => {
   const { email, code } = req.body
