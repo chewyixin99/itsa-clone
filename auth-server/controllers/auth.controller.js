@@ -286,7 +286,7 @@ exports.signin = async (req, res) => {
 			for (let i = 0; i < roles.length; i++) {
 				authorities.push(roles[i].name);
 			}
-			const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+			const token = jwt.sign({ user: { id: user.sub, roles: authorities, email: user.email } }, privateKey, {
 				algorithm: "RS256",
 				expiresIn: 3600, // 1 hour,
 				issuer: "Auth App",
@@ -389,7 +389,7 @@ exports.signinOtp = async (req, res) => {
 		for (let i = 0; i < roles.length; i++) {
 			authorities.push(roles[i].name);
 		}
-		const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+		const token = jwt.sign({ user: { id: user.sub, roles: authorities, email: user.email } }, privateKey, {
 			algorithm: "RS256",
 			expiresIn: 3600, // 1 hour,
 			issuer: "Auth App",
@@ -468,7 +468,7 @@ async function verifyLogin(email, code, req, res) {
 		for (let i = 0; i < roles.length; i++) {
 			authorities.push(roles[i].name);
 		}
-		const token = jwt.sign({ id: user.sub, roles: authorities }, privateKey, {
+		const token = jwt.sign({ user: { id: user.sub, roles: authorities, email: user.email } }, privateKey, {
 			algorithm: "RS256",
 			expiresIn: 3600, // 1 hour,
 			issuer: "Auth App",
