@@ -36,16 +36,6 @@ resource "aws_subnet" "subnet_public_1" {
   }
 }
 
-resource "aws_subnet" "subnet_private_1" {
-  vpc_id                  = aws_vpc.vpc1.id
-  cidr_block              = "10.0.64.0/20"
-  availability_zone       = "ap-southeast-1a"
-  map_public_ip_on_launch = false
-  tags = {
-    Name = "subnet_private_1"
-  }
-}
-
 resource "aws_subnet" "subnet_public_2" {
   vpc_id                  = aws_vpc.vpc1.id
   cidr_block              = "10.0.80.0/22"
@@ -53,6 +43,16 @@ resource "aws_subnet" "subnet_public_2" {
   map_public_ip_on_launch = true
   tags = {
     Name = "subnet_public_2"
+  }
+}
+
+resource "aws_subnet" "subnet_private_1" {
+  vpc_id                  = aws_vpc.vpc1.id
+  cidr_block              = "10.0.64.0/20"
+  availability_zone       = "ap-southeast-1a"
+  map_public_ip_on_launch = false
+  tags = {
+    Name = "subnet_private_1"
   }
 }
 
@@ -69,7 +69,7 @@ resource "aws_subnet" "subnet_private_2" {
 # * Security group for VPC #################################################
 resource "aws_security_group" "sg_web" {
   name        = "sg_web"
-  description = "Web server security group"
+  description = "Web app security group"
   vpc_id      = aws_vpc.vpc1.id
   tags = {
     Name = "sg-web"
@@ -92,8 +92,8 @@ resource "aws_security_group" "sg_web" {
   }
 }
 resource "aws_security_group" "sg_server" {
-  name        = "sg_db"
-  description = "Database security group"
+  name        = "sg_server"
+  description = "Server security group"
   vpc_id      = aws_vpc.vpc1.id
   tags = {
     Name = "sg-db"
@@ -129,140 +129,140 @@ resource "aws_security_group" "sg_db" {
 
 # * IAM role #################################################
 # backend service, SCS, db permission
-resource "aws_iam_role" "test_role" {
-  name = "test_role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Sid    = ""
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        }
-      },
-    ]
-  })
+# resource "aws_iam_role" "test_role" {
+#   name = "test_role"
+#   assume_role_policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = "sts:AssumeRole"
+#         Effect = "Allow"
+#         Sid    = ""
+#         Principal = {
+#           Service = "ec2.amazonaws.com"
+#         }
+#       },
+#     ]
+#   })
 
-  tags = {
-    tag-key = "tag-value"
-  }
-}
+#   tags = {
+#     tag-key = "tag-value"
+#   }
+# }
 
 # define later
-resource "aws_iam_role_policy" "test_policy" {
-  name = "test_policy"
-  role = aws_iam_role.test_role.id
+# resource "aws_iam_role_policy" "test_policy" {
+#   name = "test_policy"
+#   role = aws_iam_role.test_role.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-    ]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Action = [
+#           "ec2:Describe*",
+#         ]
+#         Effect   = "Allow"
+#         Resource = "*"
+#       },
+#     ]
+#   })
+# }
 
 # * Load balancer #################################################
-resource "aws_lb" "load_balancer_1" {
-  name               = "test-lb-tf"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.sg_web.id] # may need to create a new sg_lb for load balancer
-  subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
+# resource "aws_lb" "load_balancer_1" {
+#   name               = "test-lb-tf"
+#   internal           = false
+#   load_balancer_type = "application"
+#   security_groups    = [aws_security_group.sg_web.id] # may need to create a new sg_lb for load balancer
+#   subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
 
-  enable_deletion_protection = true
-  # access_logs {
-  #   bucket = aws_s3_bucket.lb_logs.id
-  #   prefix = "test-lb"
-  #   enabled = true
-  # }
-}
+#   enable_deletion_protection = false
+#   # access_logs {
+#   #   bucket = aws_s3_bucket.lb_logs.id
+#   #   prefix = "test-lb"
+#   #   enabled = true
+#   # }
+# }
 
-resource "aws_lb_target_group" "lb_target_group_1" {
-  name     = "tf-example-lb-tg"
-  port     = 80
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.vpc1.id
-}
+# resource "aws_lb_target_group" "lb_target_group_1" {
+#   name     = "tf-example-lb-tg"
+#   port     = 80
+#   protocol = "HTTP"
+#   vpc_id   = aws_vpc.vpc1.id
+# }
 
 # * ECS cluster #################################################
-resource "aws_ecs_cluster" "ecs_cluster_1" {
-  name = "ecs_cluster_1"
-  setting {
-    name  = "containerInsights"
-    value = "enabled"
-  }
-}
+# resource "aws_ecs_cluster" "ecs_cluster_1" {
+#   name = "ecs_cluster_1"
+#   setting {
+#     name  = "containerInsights"
+#     value = "enabled"
+#   }
+# }
 
 # * todo: change when docker is up
-resource "aws_ecs_task_definition" "web-app-service" {
-  family = "service"
-  container_definitions = jsonencode([
-    {
-      name      = "first"
-      image     = "service-first"
-      cpu       = 10
-      memory    = 512
-      essential = true
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-    },
-    {
-      name      = "second"
-      image     = "service-second"
-      cpu       = 10
-      memory    = 256
-      essential = true
-      portMappings = [
-        {
-          containerPort = 443
-          hostPort      = 443
-        }
-      ]
-    }
-  ])
-  volume {
-    name      = "service-storage"
-    host_path = "/ecs/service-storage"
-  }
-  placement_constraints {
-    type       = "memberOf"
-    expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
-  }
-}
+# resource "aws_ecs_task_definition" "web-app-service" {
+#   family = "service"
+#   container_definitions = jsonencode([
+#     {
+#       name      = "first"
+#       image     = "service-first"
+#       cpu       = 10
+#       memory    = 512
+#       essential = true
+#       portMappings = [
+#         {
+#           containerPort = 80
+#           hostPort      = 80
+#         }
+#       ]
+#     },
+#     {
+#       name      = "second"
+#       image     = "service-second"
+#       cpu       = 10
+#       memory    = 256
+#       essential = true
+#       portMappings = [
+#         {
+#           containerPort = 443
+#           hostPort      = 443
+#         }
+#       ]
+#     }
+#   ])
+#   volume {
+#     name      = "service-storage"
+#     host_path = "/ecs/service-storage"
+#   }
+#   placement_constraints {
+#     type       = "memberOf"
+#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
+#   }
+# }
 
-resource "aws_ecs_service" "web-app" {
-  name            = "web-app-ui"
-  cluster         = aws_ecs_cluster.ecs_cluster_1.id
-  task_definition = aws_ecs_task_definition.web-app-service.arn
-  desired_count   = 1
-  iam_role        = aws_iam_role.test_role.arn
-  depends_on      = [aws_iam_role_policy.test_policy]
-  ordered_placement_strategy {
-    type  = "binpack"
-    field = "cpu"
-  }
-  load_balancer {
-    target_group_arn = aws_lb_target_group.lb_target_group_1.arn
-    container_name   = "web-app"
-    container_port   = 80
-  }
-  placement_constraints {
-    type       = "memberOf"
-    expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
-  }
-}
+# resource "aws_ecs_service" "web-app" {
+#   name            = "web-app-ui"
+#   cluster         = aws_ecs_cluster.ecs_cluster_1.id
+#   task_definition = aws_ecs_task_definition.web-app-service.arn
+#   desired_count   = 1
+#   iam_role        = aws_iam_role.test_role.arn
+#   depends_on      = [aws_iam_role_policy.test_policy]
+#   ordered_placement_strategy {
+#     type  = "binpack"
+#     field = "cpu"
+#   }
+#   load_balancer {
+#     target_group_arn = aws_lb_target_group.lb_target_group_1.arn
+#     container_name   = "web-app"
+#     container_port   = 80
+#   }
+#   placement_constraints {
+#     type       = "memberOf"
+#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
+#   }
+# }
 
 # * ASG auto scaling group #################################################
 # todo: uncomment once launch configuration specified
@@ -282,48 +282,48 @@ resource "aws_ecs_service" "web-app" {
 # }
 
 # * Aurora #################################################
-resource "aws_db_subnet_group" "db_subnet_group_aurora" {
-  name       = "aurora db subnet group"
-  subnet_ids = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_private_1.id, aws_subnet.subnet_public_2.id, aws_subnet.subnet_private_2.id]
+# resource "aws_db_subnet_group" "db_subnet_group_aurora" {
+#   name       = "aurora db subnet group"
+#   subnet_ids = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_private_1.id, aws_subnet.subnet_public_2.id, aws_subnet.subnet_private_2.id]
 
-  tags = {
-    Name = "My DB subnet group"
-  }
-}
+#   tags = {
+#     Name = "My DB subnet group"
+#   }
+# }
 
 # * Aurora cluster
-resource "aws_rds_cluster" "rds_cluster_aurora" {
-  cluster_identifier          = "aurora-cluster"
-  engine                      = "aurora-mysql"
-  availability_zones          = ["ap-southeast-1a", "ap-southeast-1b"]
-  database_name               = "mysqldb"
-  master_username             = "admin"
-  manage_master_user_password = true
-  backup_retention_period     = 0
-  vpc_security_group_ids      = [aws_security_group.sg_db.id]
-  db_subnet_group_name        = aws_db_subnet_group.db_subnet_group_aurora.name
-  apply_immediately           = true
-  skip_final_snapshot         = true
-}
+# resource "aws_rds_cluster" "rds_cluster_aurora" {
+#   cluster_identifier          = "aurora-cluster"
+#   engine                      = "aurora-mysql"
+#   availability_zones          = ["ap-southeast-1a", "ap-southeast-1b"]
+#   database_name               = "mysqldb"
+#   master_username             = "admin"
+#   manage_master_user_password = true
+#   backup_retention_period     = 0
+#   vpc_security_group_ids      = [aws_security_group.sg_db.id]
+#   db_subnet_group_name        = aws_db_subnet_group.db_subnet_group_aurora.name
+#   apply_immediately           = true
+#   skip_final_snapshot         = true
+# }
 
 # * Aurora instance
-resource "aws_rds_cluster_instance" "cluster_instances" {
-  count              = 1
-  identifier         = "aurora-cluster-${count.index}"
-  cluster_identifier = aws_rds_cluster.rds_cluster_aurora.id
-  instance_class     = "db.r5.large"
-  engine             = aws_rds_cluster.rds_cluster_aurora.engine
-  engine_version     = aws_rds_cluster.rds_cluster_aurora.engine_version
-}
+# resource "aws_rds_cluster_instance" "cluster_instances" {
+#   count              = 1
+#   identifier         = "aurora-cluster-${count.index}"
+#   cluster_identifier = aws_rds_cluster.rds_cluster_aurora.id
+#   instance_class     = "db.r5.large"
+#   engine             = aws_rds_cluster.rds_cluster_aurora.engine
+#   engine_version     = aws_rds_cluster.rds_cluster_aurora.engine_version
+# }
 
 # * Internet Gateway #################################################
-resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.vpc1.id
+# resource "aws_internet_gateway" "igw" {
+#   vpc_id = aws_vpc.vpc1.id
 
-  tags = {
-    Name = "igw_main_vpc1"
-  }
-}
+#   tags = {
+#     Name = "igw_main_vpc1"
+#   }
+# }
 
 # * WAF #################################################
 # todo: customize this to fit use case
