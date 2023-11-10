@@ -35,6 +35,18 @@ jobs:
         working-directory: ./auth-server
         run: npm ci
 
+      - name: 'Create env file'
+        run: |
+          echo "${{ secrets.BE_ENV_FILE }}" > ./auth-server/.env
+
+      - name: 'Create Certificate File'
+        env:
+          CERT_PEM: ${{ secrets.BE_CERT_PEM }}
+          PRIVATEKEY_PEM: ${{ secrets.BE_PRIVATEKEY_PEM }}
+        run: |
+          echo "$CERT_PEM" | base64 --decode > ./auth-server/cert.pem
+          echo "$PRIVATEKEY_PEM" | base64 --decode > ./auth-server/privateKey.pem
+
       - name: Run tests
         working-directory: ./auth-server
         run: npm test
