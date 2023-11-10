@@ -72,14 +72,14 @@ resource "aws_subnet" "tf-public-subnet-2" {
   }
 }
 
-# * VPC INTERNET #################################################
+# * VPC INTERNET GATEWAY #################################################
 resource "aws_internet_gateway" "tf-igw" {
   vpc_id = aws_vpc.tf-vpc-301.id
   tags = {
     Name = "tf-public-gateway-1"
   }
 }
-# * ROUTE TABLES #################################################
+# * ROUTE TABLE IGW
 resource "aws_route_table" "tf-public-route-table" {
   vpc_id = aws_vpc.tf-vpc-301.id
   route {
@@ -101,14 +101,71 @@ resource "aws_route_table_association" "tf-public-2" {
   route_table_id = aws_route_table.tf-public-route-table.id
   subnet_id      = aws_subnet.tf-public-subnet-2.id
 }
+# * VPC NAT GATEWAY #################################################
+# * NAT GW 1
+resource "aws_eip" "tf-nat-gateway-1-eip" {
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.tf-igw]
+  tags = {
+    Name      = "tf-nat-gateway-1"
+    Terraform = true
+  }
+}
+resource "aws_nat_gateway" "tf-nat-gateway-1" {
+  depends_on    = [aws_subnet.tf-public-subnet-1]
+  subnet_id     = aws_subnet.tf-public-subnet-1.id
+  allocation_id = aws_eip.tf-nat-gateway-1-eip.id
+  tags = {
+    Name = "tf-nat-gateway-1"
+  }
+}
+resource "aws_route_table" "tf-private-route-table-1" {
+  vpc_id = aws_vpc.tf-vpc-301.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.tf-nat-gateway-1.id
+  }
+  tags = {
+    Name      = "tf-private-rtb-1"
+    Terraform = "true"
+  }
+}
 resource "aws_route_table_association" "tf-private-1" {
   depends_on     = [aws_subnet.tf-private-subnet-1]
-  route_table_id = aws_route_table.tf-public-route-table.id
+  route_table_id = aws_route_table.tf-private-route-table-1.id
   subnet_id      = aws_subnet.tf-private-subnet-1.id
+}
+# * NAT GW 2
+resource "aws_eip" "tf-nat-gateway-2-eip" {
+  domain     = "vpc"
+  depends_on = [aws_internet_gateway.tf-igw]
+  tags = {
+    Name      = "tf-nat-gateway-2"
+    Terraform = true
+  }
+}
+resource "aws_nat_gateway" "tf-nat-gateway-2" {
+  depends_on    = [aws_subnet.tf-public-subnet-2]
+  subnet_id     = aws_subnet.tf-public-subnet-2.id
+  allocation_id = aws_eip.tf-nat-gateway-2-eip.id
+  tags = {
+    Name = "tf-nat-gateway-2"
+  }
+}
+resource "aws_route_table" "tf-private-route-table-2" {
+  vpc_id = aws_vpc.tf-vpc-301.id
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.tf-nat-gateway-2.id
+  }
+  tags = {
+    Name      = "tf-private-rtb-2"
+    Terraform = "true"
+  }
 }
 resource "aws_route_table_association" "tf-private-2" {
   depends_on     = [aws_subnet.tf-private-subnet-2]
-  route_table_id = aws_route_table.tf-public-route-table.id
+  route_table_id = aws_route_table.tf-private-route-table-2.id
   subnet_id      = aws_subnet.tf-private-subnet-2.id
 }
 # * VPC SECURITY GROUP RULES #################################################
@@ -284,81 +341,179 @@ resource "aws_security_group" "tf-DB-SG" {
   description = "Managed by Terraform - in from be-ecs-sg"
   vpc_id      = aws_vpc.tf-vpc-301.id
 }
-
-
-# * ECS cluster #################################################
-# resource "aws_ecs_cluster" "tf-ecs-cluster" {
-#   name = "tf-ecs-cluster"
-#   setting {
-#     name  = "containerInsights"
-#     value = "enabled"
-#   }
-# }
-
-# todo: change when docker is up
-# resource "aws_ecs_task_definition" "web-app-service" {
-#   family = "service"
-#   container_definitions = jsonencode([
-#     {
-#       name      = "first"
-#       image     = "service-first"
-#       cpu       = 10
-#       memory    = 512
-#       essential = true
-#       portMappings = [
-#         {
-#           containerPort = 80
-#           hostPort      = 80
-#         }
-#       ]
-#     },
-#     {
-#       name      = "second"
-#       image     = "service-second"
-#       cpu       = 10
-#       memory    = 256
-#       essential = true
-#       portMappings = [
-#         {
-#           containerPort = 443
-#           hostPort      = 443
-#         }
-#       ]
-#     }
-#   ])
-#   volume {
-#     name      = "service-storage"
-#     host_path = "/ecs/service-storage"
-#   }
-#   placement_constraints {
-#     type       = "memberOf"
-#     expression = "attribute:ecs.availability-zone in [ap-southeast-1a, ap-southeast-1b]"
-#   }
-# }
-
+# * ECS CLUSTER #################################################
+# * TASK DEFINITION
+resource "aws_ecs_task_definition" "tf-fargate-web" {
+  family                   = "tf-fargate-web"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  task_role_arn            = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole"
+  execution_role_arn       = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole" # todo: this is existing IAM role
+  runtime_platform {
+    cpu_architecture        = "X86_64"
+    operating_system_family = "LINUX"
+  }
+  container_definitions = jsonencode([
+    {
+      "name" : "docker-fe",
+      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/fe",
+      "cpu" : 0,
+      "healthCheck" = {
+        "command" = [
+          "CMD-SHELL",
+          "curl -f http://localhost/ || exit 1",
+        ]
+        "interval" = 30
+        "retries"  = 3
+        "timeout"  = 5
+      }
+      "portMappings" : [
+        {
+          "name" : "docker-fe-80-tcp",
+          "containerPort" : 80,
+          "hostPort" : 80,
+          "protocol" : "tcp",
+          "appProtocol" : "http"
+        }
+      ],
+      "essential" : true,
+      "environment" : [],
+      "environmentFiles" : [],
+      "mountPoints" : [],
+      "volumesFrom" : [],
+      "ulimits" : [],
+      "logConfiguration" : {
+        "logDriver" : "awslogs",
+        "options" : {
+          "awslogs-create-group" : "true",
+          "awslogs-group" : "/ecs/",
+          "awslogs-region" : "ap-southeast-1",
+          "awslogs-stream-prefix" : "ecs"
+        },
+        "secretOptions" : []
+      }
+    }
+  ])
+}
+resource "aws_ecs_task_definition" "tf-fargate-server" {
+  family                   = "tf-fargate-server"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  task_role_arn            = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole"
+  execution_role_arn       = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole" # todo: this is existing IAM role
+  runtime_platform {
+    cpu_architecture        = "X86_64"
+    operating_system_family = "LINUX"
+  }
+  container_definitions = jsonencode([
+    {
+      "name" : "docker-be",
+      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be",
+      "cpu" : 0,
+      "healthCheck" = {
+        "command" = [
+          "CMD-SHELL",
+          "curl -f http://localhost/ || exit 1",
+        ]
+        "interval" = 30
+        "retries"  = 3
+        "timeout"  = 5
+      }
+      "portMappings" : [
+        {
+          "name" : "docker-be-80-tcp",
+          "containerPort" : 80,
+          "hostPort" : 80,
+          "protocol" : "tcp",
+          "appProtocol" : "http"
+        }
+      ],
+      "essential" : true,
+      "environment" : [],
+      "environmentFiles" : [],
+      "mountPoints" : [],
+      "volumesFrom" : [],
+      "ulimits" : [],
+      "logConfiguration" : {
+        "logDriver" : "awslogs",
+        "options" : {
+          "awslogs-create-group" : "true",
+          "awslogs-group" : "/ecs/",
+          "awslogs-region" : "ap-southeast-1",
+          "awslogs-stream-prefix" : "ecs"
+        },
+        "secretOptions" : []
+      }
+    }
+  ])
+}
+# * ECS CLUSTER
+resource "aws_ecs_cluster" "tf-ecs-cluster" {
+  name = "tf-ecs-cluster"
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+}
+# * ECS SERVICES
+resource "aws_ecs_service" "tf-web-app" {
+  name            = "tf-web-app"
+  cluster         = aws_ecs_cluster.tf-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.tf-fargate-web.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+  network_configuration {
+    security_groups = [aws_security_group.tf-FE-ECS-SG.id]
+    subnets = [
+      aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
+    ]
+    assign_public_ip = true
+  }
+}
+resource "aws_ecs_service" "tf-server-app" {
+  name            = "tf-server-app"
+  cluster         = aws_ecs_cluster.tf-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.tf-fargate-server.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+  network_configuration {
+    security_groups = [aws_security_group.tf-BE-ECS-SG.id]
+    subnets = [
+      aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
+    ]
+    assign_public_ip = true
+  }
+}
 # * Load balancer #################################################
-# resource "aws_lb" "load_balancer_1" {
-#   name               = "test-lb-tf"
-#   internal           = false
-#   load_balancer_type = "application"
-#   security_groups    = [aws_security_group.sg_web.id] # may need to create a new sg_lb for load balancer
-#   subnets            = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_public_2.id]
+resource "aws_lb" "tf-fe-alb" {
+  name                       = "tf-fe-alb"
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.tf-FE-ALB-SG.id]
+  subnets                    = [aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id]
+  enable_deletion_protection = false
+}
 
-#   enable_deletion_protection = false
-#   # access_logs {
-#   #   bucket = aws_s3_bucket.lb_logs.id
-#   #   prefix = "test-lb"
-#   #   enabled = true
-#   # }
-# }
-
-# resource "aws_lb_target_group" "lb_target_group_1" {
-#   name     = "tf-example-lb-tg"
-#   port     = 80
-#   protocol = "HTTP"
-#   vpc_id   = aws_vpc.vpc1.id
-# }
-
+resource "aws_lb_target_group" "tf-fe-alb-target-group" {
+  name        = "tf-fe-alb-target-group"
+  port        = 80
+  target_type = "ip"
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_lb_listener" "tf-fe-alb-listener" {
+  load_balancer_arn = aws_lb.tf-fe-alb.arn
+  port              = 80
+  protocol          = "HTTP"
+  # certificate_arn   = 
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tf-fe-alb-target-group.arn
+  }
+}
 # * IAM role #################################################
 # backend service, SCS, db permission
 # resource "aws_iam_role" "test_role" {
