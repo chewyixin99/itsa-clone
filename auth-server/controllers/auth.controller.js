@@ -11,8 +11,36 @@ const { authenticator } = require('otplib')
 var jwt = require("jsonwebtoken");
 var bcrypt = require("bcryptjs");
 const fs = require('fs');
-const privateKey = fs.readFileSync('private.key', 'utf8');
-const publicKey = fs.readFileSync('public.key', 'utf8');
+const crypto = require('crypto');
+
+// ------------- FOR JWT TOKEN ---------------------
+// Read keys
+const privateKey = fs.readFileSync('privateKey.pem', 'utf8');
+const publicKey = fs.readFileSync('cert.pem', 'utf8'); 
+
+// Generate kid for the jwks
+const { v4: uuidv4 } = require('uuid');
+const kid = uuidv4();
+
+// Convert the PEM encoded public key to a DER formatted Buffer
+const derPublicKey = crypto.createPublicKey(publicKey);
+const derBuffer = derPublicKey.export({ type: 'spki', format: 'der' });
+
+// Parse the DER buffer to extract the modulus and exponent
+const publicKeyAsn1 = crypto.createPublicKey({ key: derBuffer, format: 'der', type: 'spki' });
+const publicKeyJson = publicKeyAsn1.export({ format: 'jwk' });
+
+// const certThumbprint = crypto.createHash('sha1').update(certDer).digest();
+// const x5t = certThumbprint.toString('base64')
+//   .replace(/\+/g, '-') // Replace '+' with '-'
+//   .replace(/\//g, '_') // Replace '/' with '_'
+//   .replace(/=+$/, ''); // Remove trailing '='
+// -------------- END OF JWT TOKEN -----------------
+
+
+
+
+
 
 
 const { sendMail } = require("./mail.controller");
@@ -148,9 +176,6 @@ exports.userInfo = async (req, res) => {
 		res.status(500).json({ message: 'Internal Server Error' });
 		}
 	};
-	
-	
-	
 
 
 exports.deleteAccount = async (req, res) => {
@@ -186,13 +211,25 @@ exports.deleteAccount = async (req, res) => {
 }
 
 
-
-
 exports.jwks = async (req, res) => {
+
+	// Assuming publicKey is an array of key objects
 	res.send({
-		publicKey
-	})
-}
+		keys: [
+		  {
+			alg: 'RS256',
+			kty: 'RSA',
+			use: 'sig',
+			n: publicKeyJson.n,
+			e: publicKeyJson.e,
+			// x5c: [certBase64], 
+			kid: kid, 
+			// x5t: x5t 
+		  }
+		]
+	  });
+  };
+  
 
 exports.signin = async (req, res) => {
 	const { email, password } = req.body;
