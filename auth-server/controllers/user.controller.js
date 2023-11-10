@@ -18,38 +18,13 @@ exports.userinfo = (req, res) => {
             given_name: user.first_name,
             family_name: user.last_name,
             name: user.first_name + " " + user.last_name,
-            birthdate: new Date(user.birthdate),
+            // birthdate: new Date(user.birthdate),
             // "gender": "Female",
             // "phone_number": "+967 (103) 878-2610"
         });
     });
 };
 
-exports.getAllUsers = (req, res) => {
-  User.findAll({
-    attributes: {
-      include: [
-        [
-          Sequelize.fn(
-            "CONCAT",
-            Sequelize.col("first_name"),
-            " ",
-            Sequelize.col("last_name")
-          ),
-          "Name",
-        ],
-      ],
-      exclude: ["password", "id", "first_name", "last_name"], // Fields to exclude
-    },
-  })
-    .then((users) => {
-      res.status(200).json(users);
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json({ message: "Internal Server Error" });
-    });
-};
 exports.getAllUsers = (req, res) => {
   User.findAll({
     attributes: {

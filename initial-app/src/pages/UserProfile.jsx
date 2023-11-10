@@ -92,9 +92,15 @@ const UserProfile = () => {
           "Content-Type": "application/json", // Set the content type to JSON
         },
       };
-      console.log(editedUserInfo);
+      const {email, family_name, given_name} = editedUserInfo;
+      
+      const updateUserInfo =  {
+        email: email,
+        first_name: given_name,
+        last_name: family_name
+      }
       // Send a PATCH request to update the user information
-      //const response = await axios.patch(`${BE_URL}/user/updateinfo`, editedUserInfo, config);
+      const response = await axios.patch(`${BE_URL}/user/userinfo`, updateUserInfo, config);
       
       if (response.status === 200) {
         // Update the userInfo state with the edited user information
@@ -120,14 +126,14 @@ const UserProfile = () => {
           <div className="max-w-[50vw] bg-white">
           {Object.entries(userInfo).map(([key, value]) => {
               // Check if the key is "sub" or "email"
-              if (key === "sub" || key === "email") {
+              if (key === "sub" || key === "email" || key==="name") {
                 return (
                   <div
                     className="flex items-center justify-between border-2"
                     key={key}
                   >
                     <div className="font-semibold min-w-[10vw] border-r-2 p-3">
-                      {capitalizeAndReplaceUnderscores(key)}
+                      { (key === "sub") ? "ID" : capitalizeAndReplaceUnderscores(key)}
                     </div>
                     <div className="min-w-[40vw] p-3">{value}</div>
                   </div>

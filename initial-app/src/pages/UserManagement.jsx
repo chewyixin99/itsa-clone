@@ -25,6 +25,7 @@ const UserManagement = () => {
     }, []);
 
     const isAdmin = currentUser && currentUser.roles.includes("admin");
+    const isMod = !isAdmin && currentUser && currentUser.roles.includes("moderator")
 
     const handleEditUser = (user, index) => {
         if (editedUserIndex === -1) {
@@ -63,7 +64,7 @@ const UserManagement = () => {
             <table className="centered-table text-left min-w-[95vw] max-w-[95vw] w-[95vw]">
                 <thead>
                     <tr>
-                        {isAdmin && (
+                        {(isAdmin || isMod ) && (
                             <>
                                 {userKeys.map((key) => (
                                     <th className="p-3 bg-white border" key={key}>
@@ -72,10 +73,11 @@ const UserManagement = () => {
                                             .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)) // Capitalize the first letter
                                             .replace("CreatedAt", "Created Date")
                                             .replace("UpdatedAt", "Updated Date")
+                                            .replace("Sub", "ID")
                                         }
                                     </th>
                                 ))}
-                                <th className="p-3">Edit</th>
+                                { isAdmin ? ( <th className="p-3">Edit</th>) : "" }
                             </>
                         )}
                     </tr>
@@ -83,12 +85,12 @@ const UserManagement = () => {
                 <tbody>
                     {users.map((user, index) => (
                         <tr key={index}>
-                            {isAdmin && (
+                            {(isAdmin || isMod) && (
                                 <>
                                     {userKeys.map((key) => (
                                         <td key={key} className="bg-white p-3 border">
                                             {editedUserIndex === index ? (
-                                                key === "id" || key === "sub" || key === "email" ? (
+                                                key === "id" || key === "sub" || key === "email" || key === "createdAt" || key === "updatedAt" ? (
                                                     user[key]
                                                 ) : (
                                                     <input
@@ -108,7 +110,7 @@ const UserManagement = () => {
                                         </td>
                                     ))}
                                     <td>
-                                        {editedUserIndex === index ? (
+                                        { isAdmin ? (editedUserIndex === index ? (
                                             <button
                                                 className={`p-3 mx-2 my-2 custom-button-primary margin-2`}
                                                 onClick={handleSaveUser}
@@ -122,7 +124,7 @@ const UserManagement = () => {
                                             >
                                                 Edit
                                             </button>
-                                        )}
+                                        )) : ""}
                                     </td>
                                 </>
                             )}

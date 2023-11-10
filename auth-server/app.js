@@ -155,7 +155,6 @@ const initialiseDemoUsers = async (User, Role) => {
             birthdate: "2011-11-11",
             status: "valid",
         }).then((user) => {
-            console.log("AAAAAAAAAAAA")
             // user role = 1
             user.setAuthTypes(3);
             user.setRoles([1, 2]);
