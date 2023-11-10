@@ -12,6 +12,10 @@ import QRVerification from "./pages/QRVerification";
 import QRVerificationSetup from "./pages/QRVerificationSetup"
 import Register from "./pages/Register"
 import Logout from "./pages/Logout";
+import UserManagement from "./pages/UserManagement";
+import ChangePassword from "./pages/ChangePassword";
+import OTPVerificationMethod from "./pages/OTPVerificationMethod";
+
 const App = () => {
   const initialIsLoggedIn = localStorage.getItem('user') ? true : false;
   const [isLoggedIn, setIsLoggedIn] = useState(initialIsLoggedIn);
@@ -42,6 +46,9 @@ const App = () => {
           <Route element={<ResetPasswordEmail />} path="reset-password-email" />
           <Route element={<ResetPassword />} path="reset-password" />
           <Route element={<UserProfile />} path="user-profile" />
+          <Route element={<UserManagement />} path="user-management" />
+          <Route element={<ChangePassword />} path="change-password" />
+          <Route element={<OTPVerificationMethod />} path="otp-verification-method" />
         </Route>
       </Routes>
     </>
