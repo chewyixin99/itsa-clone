@@ -13,7 +13,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "aws-sdk": "^2.1482.0",
+        "aws-sdk": "^2.1492.0",
         "axios": "^1.6.0",
         "bcryptjs": "^2.4.3",
         "convert-excel-to-json": "^1.7.0",
