@@ -21,7 +21,7 @@ router.post("/validateqr", controller.validateQR);
 
 router.post("/qr", controller.generateQR);
 
-router.post("/jwks", controller.jwks);
+router.get("/jwks", controller.jwks);
 
 router.delete("/deleteaccount", authJwt.verifyToken, controller.deleteAccount);
 

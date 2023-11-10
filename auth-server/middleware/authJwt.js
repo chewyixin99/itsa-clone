@@ -2,7 +2,8 @@ const jwt = require("jsonwebtoken");
 const db = require("../models");
 const fs = require("fs");
 
-const publicKey = fs.readFileSync('public.key', 'utf8');
+// const publicKey = fs.readFileSync('public.key', 'utf8');
+const publicKey = fs.readFileSync('cert.pem', 'utf8'); 
 const ssoPublicKey = fs.readFileSync('keys/sso_public_key.pem', 'utf8');
 const User = db.user;
 verifyToken = (req, res, next) => {
