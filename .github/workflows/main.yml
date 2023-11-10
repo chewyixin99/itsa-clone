@@ -123,7 +123,6 @@ jobs:
       - name: 'Create env file'
         run: |
           echo "${{ secrets.BE_ENV_FILE }}" > ./auth-server/.env
-          cat ./auth-server/.env
 
       - name: 'Create Certificate File'
         env:
