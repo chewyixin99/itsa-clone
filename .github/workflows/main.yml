@@ -122,5 +122,12 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-    
+      
+      - name: 'Create Certificate File'
+        env:
+          CERT_PEM: ${{ secrets.BE_CERT_PEM }}
+          PRIVATEKEY_PEM: ${{ secrets.BE_PRIVATEKEY_PEM }}
+        run: |
+          echo "$CERT_PEM" | base64 --decode > ./auth-server/cert.pem
+          echo "$PRIVATEKEY_PEM" | base64 --decode > ./auth-server/privateKey.pem
     
