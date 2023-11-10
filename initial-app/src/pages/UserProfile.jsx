@@ -49,6 +49,14 @@ const UserProfile = () => {
     }
   };
 
+  const handleChangePassword = () => {
+    navigate("/change-password");
+  };
+
+  const handleOTPVerificationMethod = () => {
+    navigate("/otp-verification-method");
+  }
+
   const handleAuthorizeUserManagement = () => {
     if (userRoles.includes("admin") || userRoles.includes("moderator")) {
       navigate("/user-management");
@@ -169,6 +177,18 @@ const UserProfile = () => {
             })}
           </div>
           <div className="max-w-[50vw] flex justify-end items-center py-3">
+            <button
+                className={`p-3 mx-2 my-2 custom-button-primary`}
+                onClick={handleOTPVerificationMethod}
+              >
+                OTP verification method
+            </button>
+            <button
+                className={`p-3 mx-2 my-2 custom-button-primary`}
+                onClick={handleChangePassword}
+              >
+                Change Password
+            </button>
             {!localStorage.getItem("sso") && (
               <button
                 className={`p-3 mx-2 my-2 custom-button-secondary`}
