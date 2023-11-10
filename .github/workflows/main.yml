@@ -93,7 +93,6 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{secrets.AWS_REGION}}
 
-
       - name: Login to Amazon ECR
         id: login-pf-aws-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -113,6 +112,14 @@ jobs:
         run: |
           echo "${{ secrets.BE_ENV_FILE }}" > ./auth-server/.env
 
+      - name: 'Create Certificate File'
+        env:
+          CERT_PEM: ${{ secrets.BE_CERT_PEM }}
+          PRIVATEKEY_PEM: ${{ secrets.BE_PRIVATEKEY_PEM }}
+        run: |
+          echo "$CERT_PEM" | base64 --decode > ./auth-server/cert.pem
+          echo "$PRIVATEKEY_PEM" | base64 --decode > ./auth-server/privateKey.pem
+
       - name: Build and push the tagged docker image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-pf-aws-ecr.outputs.registry }}
@@ -122,12 +129,3 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-      
-      - name: 'Create Certificate File'
-        env:
-          CERT_PEM: ${{ secrets.BE_CERT_PEM }}
-          PRIVATEKEY_PEM: ${{ secrets.BE_PRIVATEKEY_PEM }}
-        run: |
-          echo "$CERT_PEM" | base64 --decode > ./auth-server/cert.pem
-          echo "$PRIVATEKEY_PEM" | base64 --decode > ./auth-server/privateKey.pem
-    
