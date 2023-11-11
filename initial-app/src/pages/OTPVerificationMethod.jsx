@@ -7,9 +7,7 @@ const OTPVerificationMethod = () => {
   const [otpMethod, setOtpMethod] = useState("");
   const [gAuth, setGAuth] = useState(true);
   const [success, setSuccess] = useState(false);
-  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
-    import.meta.env.VITE_BACKEND_PORT
-  }`;
+  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 
   useEffect(() => {
     if (!localStorage.getItem("user")) {
@@ -27,22 +25,36 @@ const OTPVerificationMethod = () => {
   }, []);
 
   const checkGauth = async (config) => {
-    const gauthStatus = await axios.get(`${BE_URL}/oauth/checkgauth`, config);
-    if (gauthStatus.status === 200) {
-      !gauthStatus.data.gauth ? setGAuth(false) : setGAuth(true);
+    try{
+      const gauthStatus = await axios.get(`${BE_URL}/oauth/checkgauth`, config);
+    
+      if (gauthStatus.status === 200) {
+        !gauthStatus.data.gauth ? setGAuth(false) : setGAuth(true);
+      }
+    } catch (error) {
+      if (error.response.status === 401) {
+        navigate("/login");
+      }
     }
+    
   };
 
   const getUserAuthType = async (config) => {
-    const authTypeData = await axios.get(
-      `${BE_URL}/oauth/userauthtype`,
-      config
-    );
-
-    if (authTypeData.status === 200) {
-      authTypeData.data.auth === "email" || authTypeData.data.auth === "none"
-        ? setOtpMethod("email")
-        : setOtpMethod("googleAuth");
+    try {
+      const authTypeData = await axios.get(
+        `${BE_URL}/oauth/userauthtype`,
+        config
+      );
+  
+      if (authTypeData.status === 200) {
+        authTypeData.data.auth === "email" || authTypeData.data.auth === "none"
+          ? setOtpMethod("email")
+          : setOtpMethod("googleAuth");
+      }
+    } catch (error){
+      if (error.response.status === 401) {
+        navigate("/login");
+      }
     }
   };
 
@@ -56,19 +68,25 @@ const OTPVerificationMethod = () => {
     const config = {
       headers: { Authorization: `Bearer ${token}` },
     };
-    const updateAuth = await axios.put(
-      `${BE_URL}/oauth/authmethod`,
-      { auth: otpMethod },
-      config
-    );
-    if (updateAuth.status === 200) {
-      setSuccess(true)
-      setTimeout(() => {
-        navigate("/user-profile")
-      }, 1000);
-      
-    }
-
+    try {
+      const updateAuth = await axios.put(
+        `${BE_URL}/oauth/authmethod`,
+        { auth: otpMethod },
+        config
+      );
+  
+      if (updateAuth.status === 200) {
+        setSuccess(true)
+        setTimeout(() => {
+          navigate("/user-profile")
+        }, 1000);
+        
+      }
+    } catch (error){
+      if (error.response.status === 401) {
+        navigate("/login");
+      } 
+    } 
   };
 
   return (

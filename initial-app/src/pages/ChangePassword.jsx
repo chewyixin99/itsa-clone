@@ -7,7 +7,7 @@ import {
   passwordWithUppercaseAndLowercase,
 } from "../lib/loginUtil";
 import axios from 'axios';
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 
 const ChangePassword = () => {
   const navigate = useNavigate();
@@ -67,10 +67,17 @@ const ChangePassword = () => {
 
       sessionStorage.setItem("page", "changepw")
       sessionStorage.setItem("pwObject", JSON.stringify(pwObj))
-
-      const authTypeData = await axios.post(`${BE_URL}/oauth/userauthtype`, {}, config);
-      (authTypeData.data.auth === "email") ? navigate("/otp") : navigate("/qr") 
-    
+      try{
+        const authTypeData = await axios.post(`${BE_URL}/oauth/userauthtype`, {}, config);
+        (authTypeData.data.auth === "email") ? navigate("/otp") : navigate("/qr") 
+      } catch (e){
+        if (e.response.status === 401) {
+          navigate("/login");
+        }
+        setErrorMsg("Error, unable to fetch data");
+        setLoading(false);
+        navigate("/user-profile");
+      }
     } else {
       setErrorMsg(tmpErrorMsg);
       setLoading(false);

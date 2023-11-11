@@ -5,9 +5,7 @@ import { validateOTP } from "../lib/loginUtil";
 import axios from "axios";
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
-  import.meta.env.VITE_BACKEND_PORT
-}`;
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const OTPVerification = ({ login }) => {
   const navigate = useNavigate();
@@ -15,6 +13,7 @@ const OTPVerification = ({ login }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [email, setEmail] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const username = localStorage.getItem("username");
 
@@ -75,6 +74,7 @@ const OTPVerification = ({ login }) => {
             email: username,
             code: otp,
           });
+
           if (response.status === 200) {
             if (sessionStorage.getItem("page") === "changepw") {
               // submit changepw request
@@ -84,25 +84,38 @@ const OTPVerification = ({ login }) => {
                 headers: { Authorization: `Bearer ${token}` },
               };
 
-              const pwData = JSON.parse(sessionStorage.getItem("pwObject"));
-              const changePW = await axios.put(
-                `${BE_URL}/oauth/password`,
-                pwData,
-                config
-              );
-              changePW.status === 200
-                ? setIsVerified(true)
-                : setErrorMsg("Error, unable to update password");
-              sessionStorage.clear();
-              setTimeout(() => {
-                navigate("/user-profile");
-              }, 1000);
+              try {
+                const pwData = JSON.parse(sessionStorage.getItem("pwObject"));
+                const changePW = await axios.put(
+                  `${BE_URL}/oauth/password`,
+                  pwData,
+                  config
+                );
+
+                changePW.status === 200
+                  ? setSuccessMsg("Password updated successfully")
+                  : setErrorMsg("Error, unable to update password");
+                sessionStorage.clear();
+                setTimeout(() => {
+                  navigate("/user-profile");
+                }, 1000);
+              } catch (e) {
+                if (e.response.status === 401) {
+                  navigate("/login");
+                }
+                sessionStorage.clear()
+                setErrorMsg("Error, unable update password ");
+                setLoading(false);
+                setTimeout(() => {
+                  navigate("/user-profile");
+                }, 2000);
+              }
             } else {
               // login
               setLoading(false);
               localStorage.setItem("user", JSON.stringify(response.data));
               login();
-              navigate("/home", {
+              navigate("/user-profile", {
                 replace: true,
               });
             }
@@ -112,6 +125,7 @@ const OTPVerification = ({ login }) => {
           }
         } catch (error) {
           setErrorMsg("Invalid OTP, try again");
+          setLoading(false);
         }
       }
       setInput(tmpInput);
@@ -190,6 +204,7 @@ const OTPVerification = ({ login }) => {
           />
         </div>
         <div className="text-center mb-5 text-red-500">{errorMsg}</div>
+        <div className="text-center mb-5 text-green-500">{successMsg}</div>
         <div className="mb-5 text-center">
           <button
             className={`p-3 mx-2 ${

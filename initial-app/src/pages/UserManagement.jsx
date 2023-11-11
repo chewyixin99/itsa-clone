@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`;
+// axios.defaults.withCredentials = true
 
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [editedUserIndex, setEditedUserIndex] = useState(-1); // Track the index of the user being edited
@@ -44,6 +45,7 @@ const UserManagement = () => {
                 const config = {
                     headers: { Authorization: `Bearer ${token}` },
                 };
+                
                 await axios.patch(`${BE_URL}/user/userinfo/`, editedUser, config);
 
                 // Disable editing mode after saving
@@ -52,6 +54,9 @@ const UserManagement = () => {
                 window.location.reload();
             }
         } catch (error) {
+            if (error.response.status === 401) {
+                navigate("/login");
+            }
             console.error("Error saving user:", error);
         }
     };

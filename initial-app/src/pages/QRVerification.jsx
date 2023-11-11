@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
-  import.meta.env.VITE_BACKEND_PORT
-}`;
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const QRVerification = ({ login }) => {
   const navigate = useNavigate();
@@ -38,30 +36,38 @@ const QRVerification = ({ login }) => {
           return;
         }
 
-        console.log(sessionStorage.getItem("page"));
         if (sessionStorage.getItem("page") === "changepw") {
-          console.log("hei");
           const data = JSON.parse(localStorage.getItem("user"));
           const token = data.accessToken || data.access_token;
           const config = {
             headers: { Authorization: `Bearer ${token}` },
           };
 
-          const pwData = JSON.parse(sessionStorage.getItem("pwObject"));
-          const changePW = await axios.put(
-            `${BE_URL}/oauth/password`,
-            pwData,
-            config
-          );
-          changePW.status === 200
-            ? setIsVerified(true)
-            : setErrorMsg("Error, unable to update password");
-          sessionStorage.clear();
-          setTimeout(() => {
-            navigate("/user-profile", {
-              replace: true,
-            });
-          }, 1500);
+          try {
+            const pwData = JSON.parse(sessionStorage.getItem("pwObject"));
+            const changePW = await axios.put(
+              `${BE_URL}/oauth/password`,
+              pwData,
+              config
+            );
+
+            changePW.status === 200
+              ? setIsVerified(true)
+              : setErrorMsg("Error, unable to update password");
+            sessionStorage.clear();
+            setTimeout(() => {
+              navigate("/user-profile", {
+                replace: true,
+              });
+            }, 1500);
+          } catch (error) {
+            setErrorMsg("Error, unable to update password")
+            setTimeout(() => {
+              navigate("/user-profile", {
+                replace: true,
+              });
+            }, 1500);
+          }
         } else {
           localStorage.setItem("user", JSON.stringify(response.data));
           localStorage.removeItem("username");
@@ -73,7 +79,7 @@ const QRVerification = ({ login }) => {
 
         sessionStorage.removeItem("page");
       } catch (error) {
-        setErrorMsg("Invalid OTP, try again");
+        setErrorMsg("Invalid OTP, try again");z
       }
     }
   };

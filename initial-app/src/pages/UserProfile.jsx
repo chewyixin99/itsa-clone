@@ -8,9 +8,8 @@ const UserProfile = () => {
   const [userRoles, setUserRoles] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Edit mode state
   const [editedUserInfo, setEditedUserInfo] = useState({}); // Store edited user info
-  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
-    import.meta.env.VITE_BACKEND_PORT
-  }`;
+  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}` 
+  
   useEffect(() => {
     // alert("OTP is 123456");
     if (!localStorage.getItem("user")) {
@@ -43,6 +42,9 @@ const UserProfile = () => {
         // Redirect the user to the login page after successful deletion
         navigate("/login");
       } catch (error) {
+        if (error.response.status === 401) {
+          navigate("/login");
+        }
         console.error("Error deleting account:", error);
         // Handle any error conditions here, e.g., show an error message to the user
       }
@@ -65,16 +67,24 @@ const UserProfile = () => {
 
   const getUserInfo = async (config) => {
     let userInfoResponse;
-    if (localStorage.getItem("sso")) {
-      userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
-    } else {
-      userInfoResponse = await axios.get(`${BE_URL}/user/userinfo`, config);
-    }
-    if (userInfoResponse.status === 200) {
-      const respData = userInfoResponse.data;
-      setUserInfo({ ...respData });
+    try {
+      if (localStorage.getItem("sso")) {
+        userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
+      } else {
+        userInfoResponse = await axios.get(`${BE_URL}/user/userinfo`, config);
+      }
+  
+      if (userInfoResponse.status === 200) {
+        const respData = userInfoResponse.data;
+        setUserInfo({ ...respData });
+      }
+    } catch (error) {
+      if (error.response.status === 401) {
+        navigate("/login");
+      }
     }
   };
+
   const capitalizeAndReplaceUnderscores = (key) => {
     return key
       .replace(/_/g, ' ') // Replace underscores with spaces
@@ -107,9 +117,10 @@ const UserProfile = () => {
         first_name: given_name,
         last_name: family_name
       }
+      
       // Send a PATCH request to update the user information
       const response = await axios.patch(`${BE_URL}/user/userinfo`, updateUserInfo, config);
-      
+
       if (response.status === 200) {
         // Update the userInfo state with the edited user information
         setUserInfo({ ...editedUserInfo });
@@ -117,6 +128,9 @@ const UserProfile = () => {
         window.location.reload();
       }
     } catch (error) {
+      if (error.response.status === 401) {
+        navigate("/login");
+      }
       console.error("Error saving user info:", error);
       // Handle any error conditions here
     }

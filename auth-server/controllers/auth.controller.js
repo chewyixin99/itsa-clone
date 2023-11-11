@@ -186,30 +186,32 @@ exports.userInfo = async (req, res) => {
 exports.deleteAccount = async (req, res) => {
   let token = req.headers.authorization.split(" ")[1];
   let content = jwt.decode(token);
-  console.log(content);
+
   const user = await User.findOne({
     where: {
-      sub: content.id,
+      sub: content.user.id,
     },
   });
+
   if (!user) {
     return res.status(404).send({ message: "User Not found.", success: false });
   }
+
   User.destroy({
     where: {
-      sub: content.id,
+      sub: content.user.id,
     },
   });
 
   UserValidate.destroy({
     where: {
-      email: user.email,
+      email: user.dataValues.email,
     },
   });
 
   GAuth.destroy({
     where: {
-      email: user.email,
+      email: user.dataValues.email,
     },
   });
   return res.send({ success: true, message: "User successfully deleted" });
@@ -237,14 +239,12 @@ exports.signin = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || email === "") {
-    res.status(400);
-    res.send("Please enter an email");
+    res.status(400).send("Please enter an email");
     return;
   }
 
   if (!password || password === "") {
-    res.status(400);
-    res.send("Please enter a password");
+    res.status(400).send("Please enter a password");
     return;
   }
 
@@ -255,16 +255,15 @@ exports.signin = async (req, res) => {
   });
 
   if (!user) {
-    res.status(400);
-    res.send("Invalid Username / Password");
+    res.status(400).send("Invalid Username / Password");
     return;
   }
 
   const passwordMatch = bcrypt.compareSync(password, user.password);
 
+
   if (!passwordMatch) {
-    res.status(400);
-    res.send("Invalid Username or Password");
+    res.status(400).send("Invalid Username or Password");
     return;
   }
 
@@ -552,7 +551,6 @@ async function verifyLogin(email, code, req, res) {
 }
 
 exports.generateQR = async (req, res) => {
-  console.log(req);
   const user = await User.findOne({
     where: {
       sub: req.userId,
@@ -649,18 +647,25 @@ exports.userAuthTypeOTP = async (req, res) => {
     auth = "email";
     const otpCode = generateOTP();
     const [record, created] = await UserValidate.findOrCreate({
-      where: { email: user.dataValues.email},
-      defaults: { email: user.dataValues.email, otp: bcrypt.hashSync(otpCode, 8), status: 1 },
+      where: { email: user.dataValues.email },
+      defaults: {
+        email: user.dataValues.email,
+        otp: bcrypt.hashSync(otpCode, 8),
+        status: 1,
+      },
     });
 
     if (created) {
       // console.log("New record created:", record.toJSON());
     } else {
-      const updatedRecord = await record.update({
-        email: user.dataValues.email,
-        otp: bcrypt.hashSync(otpCode, 8),
-        status: 1,
-      }, { where: { email: user.dataValues.email } });
+      const updatedRecord = await record.update(
+        {
+          email: user.dataValues.email,
+          otp: bcrypt.hashSync(otpCode, 8),
+          status: 1,
+        },
+        { where: { email: user.dataValues.email } }
+      );
       // console.log("Existing record updated:", record.toJSON());
     }
 
@@ -674,12 +679,10 @@ exports.userAuthTypeOTP = async (req, res) => {
     return res.status(200).send({ auth: auth, message: "Please enter OTP" });
   } else if (authType[0].id === 2) {
     auth = "gauth";
-    return res
-      .status(200)
-      .send({
-        auth: auth,
-        message: "Open your authenticator app and enter otp",
-      });
+    return res.status(200).send({
+      auth: auth,
+      message: "Open your authenticator app and enter otp",
+    });
   } else {
     auth = "none";
     return res.status(200).send({ auth: auth });
@@ -723,7 +726,7 @@ exports.updateAuthMethod = async (req, res) => {
     req.body.auth !== "email" ? user.setAuthTypes(2) : user.setAuthTypes(1);
     return res.status(200).send({ message: "Success" });
   } catch (e) {
-    return res.status(401).send({ message: "Unable to change auth type" });
+    return res.status(404).send({ message: "Unable to change auth type" });
   }
 };
 
@@ -747,10 +750,13 @@ exports.changePassword = async (req, res) => {
     return res.status(404).send({ message: "User not found" });
   }
 
-  const passwordMatch = bcrypt.compareSync(currentPassword, user.dataValues.password);
-  
+  const passwordMatch = bcrypt.compareSync(
+    currentPassword,
+    user.dataValues.password
+  );
+
   if (!passwordMatch) {
-    return res.status(401).send("Wrong password");
+    return res.status(404).send("Wrong password");
   }
   const updatedRecord = await User.update(
     {
@@ -767,4 +773,108 @@ exports.changePassword = async (req, res) => {
   }
 
   return res.status(200).send({ message: "Password updated successfully" });
+};
+
+const validateEmail = (email) => {
+  return String(email)
+    .toLowerCase()
+    .match(
+      /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|.(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+    );
+};
+
+exports.forgetPassword = async (req, res) => {
+  const { email } = req.body;
+
+  if (!validateEmail(email)) {
+    return res.status(400).send({ message: "Bad Request" });
+  }
+
+  const user = await User.findOne({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    return res.status(404).send({ message: "Invalid Email" });
+  }
+
+  // Generate a unique token
+  const token =
+    Math.random().toString(36).substring(2, 15) +
+    Math.random().toString(36).substring(2, 15);
+
+  try {
+    // Find the record based on a unique identifier (e.g., primary key)
+    const [record, created] = await UserValidate.findOrCreate({
+      where: { email: email },
+      defaults: { email: email, otp: bcrypt.hashSync(token, 8), status: 1 },
+    });
+
+    if (created) {
+      // console.log("New record created:", record.toJSON());
+    } else {
+      const updatedRecord = await record.update({
+        email: email,
+        otp: bcrypt.hashSync(token, 8),
+        status: 1,
+      });
+      // console.log("Existing record updated:", record.toJSON());
+    }
+    if (record) {
+      // send email with token
+      data = {
+        email: email,
+        code: `${req.headers.origin}/reset-password?token=${token}`,
+        resetpw: true,
+      };
+      
+      // Async call to email, if fail then call again
+      await sendMail(data);
+      return res.status(200).send({ message: "Go to your email to reset password" });
+    }
+  } catch (error) {
+    return res.status(500).send(error);
+
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, token, newpassword, confirmpassword } = req.body;
+
+  if (!validateEmail(email) || newpassword !== confirmpassword) {
+    return res.status(400).send({ message: "Bad Request" });
+  }
+
+  const data = await UserValidate.findOne({
+    where: {
+      email: email,
+      status: 1
+    },
+  });
+
+  if (!data) {
+    return res.status(404).send({ message: "Invalid Email" });
+  }
+
+  if(!bcrypt.compareSync(token, data.dataValues.otp)){
+    return res.status(401).send({ message: "Unauthorized access" })
+  }
+
+  await data.update({status:0})
+
+  const updatedRecord = await User.update(
+    {
+      email: email,
+      password: bcrypt.hashSync(newpassword, 8),
+    },
+    { where: { email: email } }
+  );
+
+  if (!updatedRecord){
+    return res.status(404).send({ message: "Failed to reset password" })
+  }
+
+  return res.status(200).send({ message: "Password has been resetted" })
 };

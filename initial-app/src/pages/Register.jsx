@@ -7,7 +7,7 @@ import {
 import axios from 'axios';
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 
 const Register = () => {
   const navigate = useNavigate();
@@ -36,6 +36,7 @@ const Register = () => {
         setLoading(true);
         setErrorMsg("");
         const response = await axios.post(`${BE_URL}/oauth/signup`, { email: username, password: password, first_name: firstName, last_name: lastName, birthdate: birthDate })
+
         if (response.status === 200) {
           setLoading(false);
           navigate("/login", {

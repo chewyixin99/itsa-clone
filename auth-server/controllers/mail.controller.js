@@ -22,7 +22,7 @@ async function sendMail2(req, res) {
 }
 
 async function sendMail(data) {
-    const { email, code } = data;
+    const { email, code, resetpw } = data;
 
     // Check for valid inputs
     if (!email) {
@@ -45,39 +45,75 @@ async function sendMail(data) {
     }
 
     const ses = new AWS.SES();
-    var params = {
-        Destination: {
-            ToAddresses: [
-                `${email}`, // The recipient's email address
+    let params;
+    if (resetpw){
+        params = {
+            Destination: {
+                ToAddresses: [
+                    `${email}`, // The recipient's email address
+                ],
+            },
+            Message: {
+                Body: {
+                    Html: {
+                        Data: `<html><body><h1>Reset Password</h1><p>Click to reset your password:  ${code}</strong></p></body></html>`,
+                        Charset: "UTF-8",
+                    },
+                    Text: {
+                        Data: `Reset password link: ${code}`,
+                        Charset: "UTF-8",
+                    },
+                },
+                Subject: {
+                    Data: "Reset password",
+                    Charset: "UTF-8",
+                },
+            },
+            Source: "cs301g3t6@gmail.com", // Your verified sender email address
+            Tags: [
+                {
+                    Name: "Reset-Password", // Tag name to categorize or track emails
+                    Value: "Reset-Password", // Tag value
+                },
             ],
-        },
-        Message: {
-            Body: {
-                Html: {
-                    Data: `<html><body><h1>Login OTP</h1><p>Your One-Time Password (OTP) is <strong>${code}</strong>. It is valid for 5 minutes.</p></body></html>`,
+        };
+    } else {
+        params = {
+            Destination: {
+                ToAddresses: [
+                    `${email}`, // The recipient's email address
+                ],
+            },
+            Message: {
+                Body: {
+                    Html: {
+                        Data: `<html><body><h1>Login OTP</h1><p>Your One-Time Password (OTP) is <strong>${code}</strong>. It is valid for 5 minutes.</p></body></html>`,
+                        Charset: "UTF-8",
+                    },
+                    Text: {
+                        Data: `Your OTP is ${code}. It is valid for 5 minutes.`,
+                        Charset: "UTF-8",
+                    },
+                },
+                Subject: {
+                    Data: "OTP (One-Time Password)",
                     Charset: "UTF-8",
                 },
-                Text: {
-                    Data: `Your OTP is ${code}. It is valid for 5 minutes.`,
-                    Charset: "UTF-8",
+            },
+            Source: "cs301g3t6@gmail.com", // Your verified sender email address
+            Tags: [
+                {
+                    Name: "otp-email", // Tag name to categorize or track emails
+                    Value: "otp", // Tag value
                 },
-            },
-            Subject: {
-                Data: "OTP (One-Time Password)",
-                Charset: "UTF-8",
-            },
-        },
-        Source: "cs301g3t6@gmail.com", // Your verified sender email address
-        Tags: [
-            {
-                Name: "otp-email", // Tag name to categorize or track emails
-                Value: "otp", // Tag value
-            },
-        ],
-    };
+            ],
+        };
+    }
+    
 
     ses.sendEmail(params, function (err, data) {
         if (err) {
+            console.log("ERROR sending email")
             console.log(err, err.stack); // an error occurred
             return 0;
         } else {

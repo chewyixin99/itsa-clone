@@ -39,4 +39,8 @@ router.put("/authmethod", authJwt.verifyToken, controller.updateAuthMethod)
 
 router.put("/password", authJwt.verifyToken, controller.changePassword)
 
+router.post("/forgetpassword", controller.forgetPassword)
+
+router.post("/resetpassword", controller.resetPassword)
+
 module.exports = router;

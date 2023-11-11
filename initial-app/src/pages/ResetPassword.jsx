@@ -6,6 +6,8 @@ import {
   passwordWithSymbol,
   passwordWithUppercaseAndLowercase,
 } from "../lib/loginUtil";
+import axios from "axios";
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -13,6 +15,8 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const onNewPasswordChange = (e) => {
     setNewPassword(e.target.value);
@@ -20,10 +24,13 @@ const ResetPassword = () => {
   const onConfirmPasswordChange = (e) => {
     setConfirmPassword(e.target.value);
   };
-  const onSubmitClick = (e) => {
+  const onEmailChange = (e) => {
+    setEmail(e.target.value);
+  };
+  const onSubmitClick = async (e) => {
     e.preventDefault();
     let tmpErrorMsg = [];
-    // todo: password validation to check both are the same values
+
     if (newPassword !== confirmPassword) {
       tmpErrorMsg.push("Passwords do not match");
     } else {
@@ -43,15 +50,31 @@ const ResetPassword = () => {
       }
     }
     if (tmpErrorMsg.length === 0) {
-      // success
-      setLoading(true);
-      setTimeout(() => {
-        alert("Password reset");
-        setLoading(false);
-        navigate("/login", {
-          replace: true,
+      setErrorMsg([])
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      try {
+        const response = await axios.post(`${BE_URL}/oauth/resetpassword`, {
+          email: email,
+          token: token,
+          newpassword: newPassword,
+          confirmpassword: confirmPassword
         });
-      }, 1000);
+  
+        console.log(response)
+        if (response.status === 200){
+          setSuccessMsg("Password resetted successfully")
+          setTimeout(() => {
+            navigate("/login")
+          }, 1500);
+        }
+      } catch (error) {
+        if (error.response.status === 401) {
+          navigate("/login");
+        }
+        setLoading(false)
+        setErrorMsg(["Password update failed, please try again"])
+      }
     } else {
       setErrorMsg(tmpErrorMsg);
       setLoading(false);
@@ -66,6 +89,14 @@ const ResetPassword = () => {
         </h2>
         <hr />
         <form className="pt-5 p-3">
+          <div>Email</div>
+          <input
+            onChange={onEmailChange}
+            value={email}
+            type="email"
+            className="custom-form-field"
+            placeholder="email"
+          />
           <div>New password</div>
           <input
             onChange={onNewPasswordChange}
@@ -87,6 +118,7 @@ const ResetPassword = () => {
               return <div key={r}>{r}</div>;
             })}
           </div>
+          <div className="mb-5 text-center text-green-500">{successMsg}</div>
           <div className="text-right">
             <button
               onClick={onSubmitClick}

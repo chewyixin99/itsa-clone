@@ -4,11 +4,12 @@ import { FiExternalLink } from "react-icons/fi";
 import axios from 'axios';
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 
 const Login = ({ login }) => {
   useEffect(() => {
     // alert("OTP is 123456"); 
+    sessionStorage.clear()
     if (localStorage.getItem("user")) {
       navigate("/user-profile")
     }

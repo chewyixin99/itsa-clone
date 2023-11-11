@@ -3,10 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${
-  import.meta.env.VITE_BACKEND_PORT
-}`;
-
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}` 
 const QRVerificationSetup = () => {
   const navigate = useNavigate();
   const [qrCodeData, setQRCodeData] = useState(""); // State for QR code data
@@ -30,12 +27,18 @@ const QRVerificationSetup = () => {
       headers: { Authorization: `Bearer ${token}` },
     };
 
-	const response = await axios.post(`${BE_URL}/oauth/qr`, {}, config);
-
-    if (response.status === 200) {
-      setQRCodeData(response.data.qr);
-    } else {
+    try {
+      const response = await axios.post(`${BE_URL}/oauth/qr`, {}, config);
+      if (response.status === 200) {
+        setQRCodeData(response.data.qr);
+      } else {
+        setErrorMsg("Unable to generate QR");
+      }
+    } catch (error){
       setErrorMsg("Unable to generate QR");
+      if (error.response.status === 401){
+        navigate("/login")
+      }
     }
   };
 
@@ -50,6 +53,7 @@ const QRVerificationSetup = () => {
           email: data.email,
           code: enteredCode,
         });
+        
         if (response.status !== 200) {
           // More general error to prevent people from hacking?
           setErrorMsg("Invalid OTP. Please try again");
@@ -58,10 +62,17 @@ const QRVerificationSetup = () => {
 
         localStorage.setItem("user", JSON.stringify(response.data));
         localStorage.removeItem("username");
-        navigate("/otp-verification-method", {
-          replace: true,
-        });
+        setIsVerified(true)
+        setTimeout(() => {
+          navigate("/otp-verification-method", {
+            replace: true,
+          });
+        }, 1000);
+
       } catch (error) {
+        if (error.response.status === 401){
+          navigate("/login")
+        }
         setErrorMsg("Invalid OTP, try again");
       }
     }

@@ -1,30 +1,43 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateEmail } from "../lib/loginUtil";
+import axios from "axios";
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const ResetPasswordEmail = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const onEmailChange = (e) => {
     setEmail(e.target.value);
   };
 
-  const onSubmitClick = (e) => {
+  const onSubmitClick = async (e) => {
     // todo: send confirmation email with token to reset password
     e.preventDefault();
     const validEmail = validateEmail(email);
+   
     if (validEmail) {
-      setLoading(true);
-      setTimeout(() => {
-        alert("Email sent");
-        setLoading(false);
-        navigate("/reset-password", {
-          replace: true,
+      try {
+        const response = await axios.post(`${BE_URL}/oauth/forgetpassword`, {
+          email: email,
         });
-      }, 1000);
+  
+        if (response.status === 200) {
+          setSuccessMsg("Reset password steps has been sent to your email");
+          setTimeout(() => {
+            setLoading(false);
+            navigate("/login");
+          }, 1500);
+        }
+      } catch (erorr){
+        if (error.response.status === 401) {
+          navigate("/login");
+        }
+      }
     } else {
       setErrorMsg("Please enter a valid email");
     }
@@ -51,6 +64,7 @@ const ResetPasswordEmail = () => {
             address that you entered.
           </div>
           <div className="mb-5 text-center text-red-500">{errorMsg}</div>
+          <div className="mb-5 text-center text-green-500">{successMsg}</div>
           <div className="text-right">
             <button
               onClick={onSubmitClick}
