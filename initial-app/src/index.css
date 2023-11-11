@@ -46,4 +46,10 @@
         @apply
         text-blue-600 hover:underline
     }
+
+    .editableInput {
+        border: 1px solid #ccc; /* Add your desired border style */
+        padding: 5px; /* Add any additional styling */
+        /* Add other styling properties as needed */
+      }
 }

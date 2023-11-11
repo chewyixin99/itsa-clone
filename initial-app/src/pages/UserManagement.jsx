@@ -99,6 +99,7 @@ const UserManagement = () => {
                                                     user[key]
                                                 ) : (
                                                     <input
+                                                        className={`w-full ${editedUserIndex === index ? 'editableInput' : ''}`}
                                                         type="text"
                                                         value={editedUser[key]}
                                                         onChange={(e) =>

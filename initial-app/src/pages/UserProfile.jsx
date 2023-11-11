@@ -172,7 +172,7 @@ const UserProfile = () => {
                   <div className="min-w-[40vw] p-3">
                     {isEditing ? (
                       <input
-                        className="w-full"
+                        className={`w-full ${isEditing ? 'editableInput': ''}`}
                         type="text"
                         value={editedUserInfo[key]}
                         onChange={(e) =>
@@ -253,3 +253,5 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
+
+
