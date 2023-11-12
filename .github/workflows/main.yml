@@ -50,7 +50,7 @@ jobs:
       - name: Run tests
         working-directory: ./auth-server
         run: npm test
-  build-publish-fe:
+  build-publish-deploy-fe:
     needs: test
     runs-on: ubuntu-latest
     steps:    
@@ -93,8 +93,23 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          
-  build-publish-be:
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+            task-definition: ${{ env.FE_ECS_TASK_DEFINITION }}
+            container-name: ${{ env.FE_CONTAINER_NAME }}
+            image: ${{ steps.build-image.outputs.image }}
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+            task-definition: ${{ steps.task-def.outputs.task-definition }}
+            service: test-fe
+            cluster: test
+            wait-for-service-stability: true
+            
+  build-publish-deploy-be:
     needs: test
     runs-on: ubuntu-latest
     steps:    
@@ -141,3 +156,18 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+            task-definition: ${{ env.BE_ECS_TASK_DEFINITION }}
+            container-name: ${{ env.BE_CONTAINER_NAME }}
+            image: ${{ steps.build-image.outputs.image }}
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+            task-definition: ${{ steps.task-def.outputs.task-definition }}
+            service: be
+            cluster: test
+            wait-for-service-stability: true
