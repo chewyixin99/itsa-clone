@@ -97,7 +97,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-            task-definition: ${{ secrets.FE_ECS_TASK_DEFINITION }}
+            task-definition: ./intial-app/task_definition.json
             container-name: ${{ secrets.FE_CONTAINER_NAME }}
             image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 
       - name: Deploy Amazon ECS task definition
@@ -159,7 +159,7 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-            task-definition: ${{ secrets.BE_ECS_TASK_DEFINITION }}
+            task-definition: ./auth-server/task_definition.json
             container-name: ${{ secrets.BE_CONTAINER_NAME }}
             image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 
       - name: Deploy Amazon ECS task definition
