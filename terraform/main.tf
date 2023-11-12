@@ -170,24 +170,6 @@ resource "aws_route_table_association" "tf-private-2" {
 }
 # * VPC SECURITY GROUP RULES #################################################
 # * IGW-SG: in from internet, out to FE-ALB-SG
-resource "aws_security_group_rule" "public-https-in" {
-  type              = "ingress"
-  description       = "in from internet, https"
-  from_port         = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.tf-IGW-SG.id
-  to_port           = 443
-}
-resource "aws_security_group_rule" "public-http-in" {
-  type              = "ingress"
-  description       = "in from internet, http"
-  from_port         = 80
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.tf-IGW-SG.id
-  to_port           = 80
-}
 resource "aws_security_group_rule" "public-out" {
   type              = "egress"
   from_port         = 0
@@ -310,6 +292,90 @@ resource "aws_security_group_rule" "tf-in_db-sg" {
   to_port                  = 3306
 }
 
+locals {
+  sg-ingress-all = toset([aws_security_group.tf-FE-ECS-SG.id])
+  sg-egress-all = toset([
+    aws_security_group.tf-DB-SG.id,
+    aws_security_group.tf-BE-ALB-SG.id,
+    aws_security_group.tf-BE-ECS-SG.id,
+    aws_security_group.tf-FE-ALB-SG.id,
+    aws_security_group.tf-FE-ECS-SG.id
+  ])
+  sg-http-ingress = toset([
+    aws_security_group.tf-BE-ALB-SG.id,
+    aws_security_group.tf-FE-ALB-SG.id,
+    aws_security_group.tf-FE-ECS-SG.id,
+    aws_security_group.tf-IGW-SG.id
+  ])
+  sg-https-ingress = toset([
+    aws_security_group.tf-BE-ALB-SG.id,
+    aws_security_group.tf-FE-ALB-SG.id,
+    aws_security_group.tf-IGW-SG.id
+  ])
+  sg-http-egress  = toset([])
+  sg-https-egress = toset([])
+
+}
+resource "aws_security_group_rule" "tf-ingress_all" {
+  for_each          = local.sg-ingress-all
+  security_group_id = each.value
+  type              = "ingress"
+  description       = "ingress all"
+  from_port         = 0
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  to_port           = 65535
+}
+resource "aws_security_group_rule" "tf-egress_all" {
+  for_each          = local.sg-egress-all
+  security_group_id = each.value
+  type              = "egress"
+  description       = "egress all"
+  from_port         = 0
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  to_port           = 65535
+}
+resource "aws_security_group_rule" "tf-http-ingress" {
+  for_each          = local.sg-http-ingress
+  security_group_id = each.value
+  type              = "ingress"
+  description       = "HTTP inbound"
+  from_port         = 80
+  protocol          = "tcp"
+  to_port           = 80
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+resource "aws_security_group_rule" "tf-https-ingress" {
+  for_each          = local.sg-https-ingress
+  security_group_id = each.value
+  type              = "ingress"
+  description       = "HTTPS inbound"
+  from_port         = 443
+  protocol          = "tcp"
+  to_port           = 443
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+resource "aws_security_group_rule" "tf-http-egress" {
+  for_each          = local.sg-http-egress
+  security_group_id = each.value
+  type              = "egress"
+  description       = "HTTP outbound"
+  from_port         = 80
+  protocol          = "tcp"
+  to_port           = 80
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+resource "aws_security_group_rule" "tf-https-egress" {
+  for_each          = local.sg-https-egress
+  security_group_id = each.value
+  type              = "egress"
+  description       = "HTTPS outbound"
+  from_port         = 443
+  protocol          = "tcp"
+  to_port           = 443
+  cidr_blocks       = ["0.0.0.0/0"]
+}
 # * VPC SECURITY GROUPS #################################################
 resource "aws_security_group" "tf-IGW-SG" {
   name        = "tf-IGW-SG"
@@ -343,14 +409,14 @@ resource "aws_security_group" "tf-DB-SG" {
 }
 # * ECS CLUSTER #################################################
 # * TASK DEFINITION
-resource "aws_ecs_task_definition" "tf-fargate-web" {
-  family                   = "tf-fargate-web"
+resource "aws_ecs_task_definition" "tf-fargate-fe" {
+  family                   = "tf-fargate-fe"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
   cpu                      = 256
   memory                   = 512
   task_role_arn            = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole"
-  execution_role_arn       = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole" # todo: this is existing IAM role
+  execution_role_arn       = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole" # todo: this is existing default IAM role
   runtime_platform {
     cpu_architecture        = "X86_64"
     operating_system_family = "LINUX"
@@ -358,7 +424,7 @@ resource "aws_ecs_task_definition" "tf-fargate-web" {
   container_definitions = jsonencode([
     {
       "name" : "docker-fe",
-      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/fe",
+      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/fe:latest",
       "cpu" : 0,
       "healthCheck" = {
         "command" = [
@@ -397,12 +463,12 @@ resource "aws_ecs_task_definition" "tf-fargate-web" {
     }
   ])
 }
-resource "aws_ecs_task_definition" "tf-fargate-server" {
-  family                   = "tf-fargate-server"
+resource "aws_ecs_task_definition" "tf-fargate-be" {
+  family                   = "tf-fargate-be"
   requires_compatibilities = ["FARGATE"]
   network_mode             = "awsvpc"
-  cpu                      = 256
-  memory                   = 512
+  cpu                      = 1024
+  memory                   = 2048
   task_role_arn            = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole"
   execution_role_arn       = "arn:aws:iam::727816232662:role/ecsTaskExecutionRole" # todo: this is existing IAM role
   runtime_platform {
@@ -412,7 +478,7 @@ resource "aws_ecs_task_definition" "tf-fargate-server" {
   container_definitions = jsonencode([
     {
       "name" : "docker-be",
-      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be",
+      "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be:latest",
       "cpu" : 0,
       "healthCheck" = {
         "command" = [
@@ -463,7 +529,7 @@ resource "aws_ecs_cluster" "tf-ecs-cluster" {
 resource "aws_ecs_service" "tf-web-app" {
   name            = "tf-web-app"
   cluster         = aws_ecs_cluster.tf-ecs-cluster.id
-  task_definition = aws_ecs_task_definition.tf-fargate-web.arn
+  task_definition = aws_ecs_task_definition.tf-fargate-fe.arn
   desired_count   = 2
   launch_type     = "FARGATE"
   network_configuration {
@@ -473,22 +539,34 @@ resource "aws_ecs_service" "tf-web-app" {
     ]
     assign_public_ip = true
   }
-}
-resource "aws_ecs_service" "tf-server-app" {
-  name            = "tf-server-app"
-  cluster         = aws_ecs_cluster.tf-ecs-cluster.id
-  task_definition = aws_ecs_task_definition.tf-fargate-server.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-  network_configuration {
-    security_groups = [aws_security_group.tf-BE-ECS-SG.id]
-    subnets = [
-      aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
-    ]
-    assign_public_ip = true
+  load_balancer {
+    target_group_arn = aws_lb_target_group.tf-fe-alb-target-group.arn
+    container_port   = 80
+    container_name   = "docker-fe"
   }
 }
+# todo: uncomment if can find a way to fix
+# resource "aws_ecs_service" "tf-server-app" {
+#   name            = "tf-server-app"
+#   cluster         = aws_ecs_cluster.tf-ecs-cluster.id
+#   task_definition = aws_ecs_task_definition.tf-fargate-be.arn
+#   desired_count   = 2
+#   launch_type     = "FARGATE"
+#   network_configuration {
+#     security_groups = [aws_security_group.tf-BE-ECS-SG.id]
+#     subnets = [
+#       aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
+#     ]
+#     assign_public_ip = true
+#   }
+#   load_balancer {
+#     target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
+#     container_port   = 80
+#     container_name   = "docker-be"
+#   }
+# }
 # * Load balancer #################################################
+# * FE LB
 resource "aws_lb" "tf-fe-alb" {
   name                       = "tf-fe-alb"
   load_balancer_type         = "application"
@@ -514,139 +592,220 @@ resource "aws_lb_listener" "tf-fe-alb-listener" {
     target_group_arn = aws_lb_target_group.tf-fe-alb-target-group.arn
   }
 }
-# * IAM role #################################################
-# backend service, SCS, db permission
-# resource "aws_iam_role" "test_role" {
-#   name = "test_role"
-#   assume_role_policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = "sts:AssumeRole"
-#         Effect = "Allow"
-#         Sid    = ""
-#         Principal = {
-#           Service = "ec2.amazonaws.com"
-#         }
-#       },
-#     ]
-#   })
+resource "aws_lb_listener_rule" "tf-fe-alb-listener-rule" {
+  listener_arn = aws_lb_listener.tf-fe-alb-listener.arn
+  priority     = 1
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tf-fe-alb-target-group.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/*"]
+    }
+  }
+}
+# * BE LB
+resource "aws_lb" "tf-be-alb" {
+  name                       = "tf-be-alb"
+  load_balancer_type         = "application"
+  security_groups            = [aws_security_group.tf-BE-ALB-SG.id]
+  subnets                    = [aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id]
+  enable_deletion_protection = false
+}
 
-#   tags = {
-#     tag-key = "tag-value"
+resource "aws_lb_target_group" "tf-be-alb-target-group" {
+  name        = "tf-be-alb-target-group"
+  port        = 80
+  target_type = "ip"
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.tf-vpc-301.id
+}
+resource "aws_lb_listener" "tf-be-alb-listener-to-ecs" {
+  load_balancer_arn = aws_lb.tf-be-alb.arn
+  port              = 3001
+  protocol          = "HTTP"
+  # certificate_arn   = 
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
+  }
+}
+resource "aws_lb_listener" "tf-be-alb-listener-http" {
+  load_balancer_arn = aws_lb.tf-be-alb.arn
+  port              = 80
+  protocol          = "HTTP"
+  # certificate_arn   = 
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
+  }
+}
+# resource "aws_lb_listener_rule" "tf-be-alb-listener-rule" {
+#   listener_arn = aws_lb_listener.tf-be-alb-listener.arn
+#   priority     = 1
+#   action {
+#     type             = "forward"
+#     target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
 #   }
-# }
-
-# define later
-# resource "aws_iam_role_policy" "test_policy" {
-#   name = "test_policy"
-#   role = aws_iam_role.test_role.id
-
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Action = [
-#           "ec2:Describe*",
-#         ]
-#         Effect   = "Allow"
-#         Resource = "*"
-#       },
-#     ]
-#   })
-# }
-
-
-# * ASG auto scaling group #################################################
-# todo: uncomment once launch configuration specified
-# resource "aws_autoscaling_group" "asg_web" {
-#   name                = "asg_web"
-#   availability_zones  = ["ap-southeast-1a", "ap-southeast-1b"]
-#   min_size            = 1
-#   max_size            = 2
-#   desired_capacity    = 1
-#   vpc_zone_identifier = [aws_subnet.subnet_public_1.id, aws_subnet.subnet_private_1.id]
-#   # launch_configuration = 
-#   tag {
-#     key                 = "Name"
-#     value               = "web-instance"
-#     propagate_at_launch = true
-#   }
-# }
-
-# * Internet Gateway #################################################
-# resource "aws_internet_gateway" "igw" {
-#   vpc_id = aws_vpc.vpc1.id
-
-#   tags = {
-#     Name = "igw_main_vpc1"
-#   }
-# }
-
-# * WAF #################################################
-# todo: customize this to fit use case
-# resource "aws_wafv2_web_acl" "example" {
-#   name        = "managed-rule-example"
-#   description = "Example of a managed rule."
-#   scope       = "REGIONAL"
-
-#   default_action {
-#     allow {}
-#   }
-
-#   rule {
-#     name     = "rule-1"
-#     priority = 1
-
-#     override_action {
-#       count {}
-#     }
-
-#     statement {
-#       managed_rule_group_statement {
-#         name        = "AWSManagedRulesCommonRuleSet"
-#         vendor_name = "AWS"
-
-#         rule_action_override {
-#           action_to_use {
-#             count {}
-#           }
-
-#           name = "SizeRestrictions_QUERYSTRING"
-#         }
-
-#         rule_action_override {
-#           action_to_use {
-#             count {}
-#           }
-
-#           name = "NoUserAgent_HEADER"
-#         }
-
-#         scope_down_statement {
-#           geo_match_statement {
-#             country_codes = ["US", "NL"]
-#           }
-#         }
-#       }
-#     }
-
-#     visibility_config {
-#       cloudwatch_metrics_enabled = false
-#       metric_name                = "friendly-rule-metric-name"
-#       sampled_requests_enabled   = false
+#   condition {
+#     path_pattern {
+#       values = ["/*"]
 #     }
 #   }
-
-#   tags = {
-#     Tag1 = "Value1"
-#     Tag2 = "Value2"
-#   }
-
-#   visibility_config {
-#     cloudwatch_metrics_enabled = false
-#     metric_name                = "friendly-metric-name"
-#     sampled_requests_enabled   = false
-#   }
 # }
 
+# * CLOUDFRONT DISTRIBUTION #################################################
+# * POLICIES
+resource "aws_cloudfront_origin_access_control" "tf-cloudfront-fe-origin-ac" {
+  name                              = "tf-cloudfront-fe-origin-ac"
+  description                       = "FE policy"
+  origin_access_control_origin_type = "mediastore"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+resource "aws_cloudfront_origin_request_policy" "tf-cloudfront-origin-request-policy" {
+  name = "tf-cloudfront-origin-request-policy"
+  cookies_config {
+    cookie_behavior = "all"
+  }
+  headers_config {
+    header_behavior = "none"
+  }
+  query_strings_config {
+    query_string_behavior = "all"
+  }
+}
+resource "aws_cloudfront_cache_policy" "tf-cloudfront-cache-policy" {
+  name        = "tf-cloudfront-cache-policy"
+  default_ttl = 50
+  max_ttl     = 100
+  min_ttl     = 1
+  parameters_in_cache_key_and_forwarded_to_origin {
+    cookies_config {
+      cookie_behavior = "all"
+    }
+    headers_config {
+      header_behavior = "none"
+    }
+    query_strings_config {
+      query_string_behavior = "all"
+    }
+  }
+}
+# * CLOUDFRONT
+resource "aws_cloudfront_distribution" "tf-cloudfront-fe" {
+  origin {
+    domain_name = aws_lb.tf-fe-alb.dns_name
+    origin_id   = aws_lb.tf-fe-alb.id
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_keepalive_timeout = 5
+      origin_protocol_policy   = "http-only"
+      origin_read_timeout      = 30
+      origin_ssl_protocols = [
+        "TLSv1.2",
+      ]
+    }
+    origin_shield {
+      enabled              = true
+      origin_shield_region = "ap-southeast-1"
+    }
+  }
+  # todo: replace this with own created WAF
+  web_acl_id      = "arn:aws:wafv2:us-east-1:727816232662:global/webacl/CreatedByCloudFront-19902cc2-6db0-4e70-9cf9-87530f072b34/2bb75c58-d8be-440b-b1ce-9c6e0e5b7350"
+  enabled         = true
+  is_ipv6_enabled = true
+  restrictions {
+    geo_restriction {
+      locations        = []
+      restriction_type = "none"
+    }
+  }
+  viewer_certificate {
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1"
+  }
+  default_cache_behavior {
+    allowed_methods = [
+      "GET",
+      "HEAD",
+    ]
+    cached_methods = [
+      "GET",
+      "HEAD",
+    ]
+    compress                 = true
+    default_ttl              = 0
+    max_ttl                  = 0
+    min_ttl                  = 0
+    smooth_streaming         = false
+    target_origin_id         = aws_lb.tf-fe-alb.id
+    trusted_key_groups       = []
+    trusted_signers          = []
+    viewer_protocol_policy   = "redirect-to-https"
+    cache_policy_id          = aws_cloudfront_cache_policy.tf-cloudfront-cache-policy.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.tf-cloudfront-origin-request-policy.id
+  }
+}
+resource "aws_cloudfront_distribution" "tf-cloudfront-be" {
+  origin {
+    domain_name = aws_lb.tf-be-alb.dns_name
+    origin_id   = aws_lb.tf-be-alb.id
+    custom_origin_config {
+      http_port                = 80
+      https_port               = 443
+      origin_keepalive_timeout = 5
+      origin_protocol_policy   = "http-only"
+      origin_read_timeout      = 30
+      origin_ssl_protocols = [
+        "TLSv1.2",
+      ]
+    }
+    origin_shield {
+      enabled              = true
+      origin_shield_region = "ap-southeast-1"
+    }
+  }
+  # todo: replace this with own created WAF
+  web_acl_id      = "arn:aws:wafv2:us-east-1:727816232662:global/webacl/CreatedByCloudFront-270e6574-93cc-4443-af65-82fddc993e8a/f7882a14-78d9-407b-b940-4887534ac6ab"
+  enabled         = true
+  is_ipv6_enabled = true
+  restrictions {
+    geo_restriction {
+      locations        = []
+      restriction_type = "none"
+    }
+  }
+  viewer_certificate {
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1"
+  }
+  default_cache_behavior {
+    allowed_methods = [
+      "DELETE",
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "PATCH",
+      "POST",
+      "PUT",
+    ]
+    cache_policy_id          = aws_cloudfront_cache_policy.tf-cloudfront-cache-policy.id
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.tf-cloudfront-origin-request-policy.id
+    cached_methods = [
+      "GET",
+      "HEAD",
+    ]
+    compress               = true
+    default_ttl            = 0
+    max_ttl                = 0
+    min_ttl                = 0
+    smooth_streaming       = false
+    target_origin_id       = aws_lb.tf-be-alb.id
+    trusted_key_groups     = []
+    trusted_signers        = []
+    viewer_protocol_policy = "redirect-to-https"
+  }
+}
