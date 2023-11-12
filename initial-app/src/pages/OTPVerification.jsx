@@ -101,7 +101,7 @@ const OTPVerification = ({ login }) => {
                 }, 1000);
               } catch (e) {
                 if (e.response.status === 401) {
-                  navigate("/login");
+                  return navigate("/login");
                 }
                 sessionStorage.clear()
                 setErrorMsg("Error, unable update password ");

@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 // axios.defaults.withCredentials = true
 
 const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 const UserManagement = () => {
+    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [editedUserIndex, setEditedUserIndex] = useState(-1); // Track the index of the user being edited
     const [editedUser, setEditedUser] = useState(null); // Store the user being edited
     const currentUser = JSON.parse(localStorage.getItem("user"));
 
     useEffect(() => {
+        if (!localStorage.getItem("user")) {
+            return navigate("/login");
+        }
+
         const data = JSON.parse(localStorage.getItem("user"));
         const token = data.accessToken || data.access_token;
         const config = {
@@ -21,6 +27,9 @@ const UserManagement = () => {
                 setUsers(response.data.slice(0, 50));
             })
             .catch((error) => {
+                if (error.response.status === 401){
+                    return navigate("/login");
+                }
                 console.error("Error fetching users:", error);
             });
     }, []);
@@ -55,7 +64,7 @@ const UserManagement = () => {
             }
         } catch (error) {
             if (error.response.status === 401) {
-                navigate("/login");
+                return navigate("/login");
             }
             console.error("Error saving user:", error);
         }

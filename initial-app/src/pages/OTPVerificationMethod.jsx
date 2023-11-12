@@ -11,7 +11,7 @@ const OTPVerificationMethod = () => {
 
   useEffect(() => {
     if (!localStorage.getItem("user")) {
-      navigate("/login");
+      return navigate("/login");
     }
 
     const data = JSON.parse(localStorage.getItem("user"));
@@ -33,7 +33,7 @@ const OTPVerificationMethod = () => {
       }
     } catch (error) {
       if (error.response.status === 401) {
-        navigate("/login");
+        return navigate("/login");
       }
     }
     
@@ -53,7 +53,7 @@ const OTPVerificationMethod = () => {
       }
     } catch (error){
       if (error.response.status === 401) {
-        navigate("/login");
+        return navigate("/login");
       }
     }
   };
@@ -84,7 +84,7 @@ const OTPVerificationMethod = () => {
       }
     } catch (error){
       if (error.response.status === 401) {
-        navigate("/login");
+        return navigate("/login");
       } 
     } 
   };

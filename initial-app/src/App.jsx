@@ -35,7 +35,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Navbar isLoggedIn={isLoggedIn} />}>
           <Route element={<Login login={login} />} index />
-          <Route element={<Home />} path="home" />
+          {/* <Route element={<Home />} path="home" /> */}
           <Route element={<Register />} path="register" />
           <Route element={<OTPVerification login={login} />} path="otp" />
           <Route element={<QRVerification login={login} />} path="qr" />

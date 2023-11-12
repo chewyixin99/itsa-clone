@@ -65,12 +65,12 @@ const ResetPassword = () => {
         if (response.status === 200){
           setSuccessMsg("Password resetted successfully")
           setTimeout(() => {
-            navigate("/login")
+            return navigate("/login")
           }, 1500);
         }
       } catch (error) {
         if (error.response.status === 401) {
-          navigate("/login");
+          return navigate("/login");
         }
         setLoading(false)
         setErrorMsg(["Password update failed, please try again"])

@@ -5,13 +5,16 @@ import axios from 'axios';
 
 // To be shifted out
 const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
-
+let counter = 0
 const Login = ({ login }) => {
   useEffect(() => {
-    // alert("OTP is 123456"); 
+    // alert("OTP is 123456");
     sessionStorage.clear()
-    if (localStorage.getItem("user")) {
+    if (localStorage.getItem("user") && counter === 0) {
+      counter += 1
       navigate("/user-profile")
+    } else if (counter > 0){
+      localStorage.clear()
     }
   }, []);
   const navigate = useNavigate();

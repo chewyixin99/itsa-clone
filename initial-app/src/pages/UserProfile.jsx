@@ -13,15 +13,9 @@ const UserProfile = () => {
   useEffect(() => {
     // alert("OTP is 123456");
     if (!localStorage.getItem("user")) {
-      navigate("/login");
+      return navigate("/login");
     }
-    const data = JSON.parse(localStorage.getItem("user"));
-    setUserRoles(data.roles); // Set userRoles
-    const token = data.accessToken || data.access_token;
-    const config = {
-      headers: { Authorization: `Bearer ${token}` },
-    };
-    getUserInfo(config);
+    getUserInfo();
   }, []);
 
   const handleDeleteAccount = async () => {
@@ -40,10 +34,10 @@ const UserProfile = () => {
         localStorage.removeItem("sso");
 
         // Redirect the user to the login page after successful deletion
-        navigate("/login");
+        return navigate("/login");
       } catch (error) {
         if (error.response.status === 401) {
-          navigate("/login");
+          return navigate("/login");
         }
         console.error("Error deleting account:", error);
         // Handle any error conditions here, e.g., show an error message to the user
@@ -65,7 +59,13 @@ const UserProfile = () => {
     }
   };
 
-  const getUserInfo = async (config) => {
+  const getUserInfo = async () => {
+    const data = JSON.parse(localStorage.getItem("user"));
+    const token = data.accessToken || data.access_token;
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+
     let userInfoResponse;
     try {
       if (localStorage.getItem("sso")) {
@@ -73,14 +73,18 @@ const UserProfile = () => {
       } else {
         userInfoResponse = await axios.get(`${BE_URL}/user/userinfo`, config);
       }
-  
       if (userInfoResponse.status === 200) {
+        setUserRoles(data.roles); // Set userRoles
+
         const respData = userInfoResponse.data;
         setUserInfo({ ...respData });
       }
+      
     } catch (error) {
       if (error.response.status === 401) {
-        navigate("/login");
+        return navigate("/login", {
+          replace: true
+        });
       }
     }
   };
@@ -129,7 +133,7 @@ const UserProfile = () => {
       }
     } catch (error) {
       if (error.response.status === 401) {
-        navigate("/login");
+        return navigate("/login");
       }
       console.error("Error saving user info:", error);
       // Handle any error conditions here

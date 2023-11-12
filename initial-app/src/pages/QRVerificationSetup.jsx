@@ -37,7 +37,7 @@ const QRVerificationSetup = () => {
     } catch (error){
       setErrorMsg("Unable to generate QR");
       if (error.response.status === 401){
-        navigate("/login")
+        return navigate("/login")
       }
     }
   };
@@ -71,7 +71,7 @@ const QRVerificationSetup = () => {
 
       } catch (error) {
         if (error.response.status === 401){
-          navigate("/login")
+          return navigate("/login")
         }
         setErrorMsg("Invalid OTP, try again");
       }

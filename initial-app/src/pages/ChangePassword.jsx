@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   passwordWithLength,
@@ -16,6 +16,12 @@ const ChangePassword = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(()=>{
+    if (!localStorage.getItem("user")) {
+      return navigate("/login");
+    }
+  })
 
   const onCurrentPasswordChange = (e) => {
     setCurrentPassword(e.target.value);
@@ -72,7 +78,7 @@ const ChangePassword = () => {
         (authTypeData.data.auth === "email") ? navigate("/otp") : navigate("/qr") 
       } catch (e){
         if (e.response.status === 401) {
-          navigate("/login");
+          return navigate("/login");
         }
         setErrorMsg("Error, unable to fetch data");
         setLoading(false);

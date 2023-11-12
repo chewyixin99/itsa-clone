@@ -30,12 +30,12 @@ const ResetPasswordEmail = () => {
           setSuccessMsg("Reset password steps has been sent to your email");
           setTimeout(() => {
             setLoading(false);
-            navigate("/login");
+            return navigate("/login");
           }, 1500);
         }
       } catch (erorr){
         if (error.response.status === 401) {
-          navigate("/login");
+          return navigate("/login");
         }
       }
     } else {
