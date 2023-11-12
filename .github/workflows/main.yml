@@ -103,7 +103,6 @@ jobs:
         with:
             task-definition: ./initial-app/task_definition.json
             container-name: ${{ secrets.FE_CONTAINER_NAME }}
-            image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
@@ -169,7 +168,6 @@ jobs:
         with:
             task-definition: ./auth-server/task_definition.json
             container-name: ${{ secrets.BE_CONTAINER_NAME }}
-            image: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
