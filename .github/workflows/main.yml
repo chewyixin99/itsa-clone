@@ -98,8 +98,8 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-            task-definition: ${{ env.FE_ECS_TASK_DEFINITION }}
-            container-name: ${{ env.FE_CONTAINER_NAME }}
+            task-definition: ${{ secrets.FE_ECS_TASK_DEFINITION }}
+            container-name: ${{ secrets.FE_CONTAINER_NAME }}
             image: ${{ steps.build-image.outputs.image }}
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -161,8 +161,8 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-            task-definition: ${{ env.BE_ECS_TASK_DEFINITION }}
-            container-name: ${{ env.BE_CONTAINER_NAME }}
+            task-definition: ${{ secrets.BE_ECS_TASK_DEFINITION }}
+            container-name: ${{ secrets.BE_CONTAINER_NAME }}
             image: ${{ steps.build-image.outputs.image }}
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
