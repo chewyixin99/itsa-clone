@@ -103,6 +103,7 @@ jobs:
         with:
             task-definition: ./initial-app/task_definition.json
             container-name: ${{ secrets.FE_CONTAINER_NAME }}
+            image: 727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/fe:latest
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
@@ -168,6 +169,7 @@ jobs:
         with:
             task-definition: ./auth-server/task_definition.json
             container-name: ${{ secrets.BE_CONTAINER_NAME }}
+            image: 727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be:latest
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
