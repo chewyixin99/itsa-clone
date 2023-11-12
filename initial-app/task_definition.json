@@ -1,0 +1,47 @@
+{
+    "family": "test-be",
+    "containerDefinitions": [
+        {
+            "name": "be",
+            "image": "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "be-3001-tcp",
+                    "containerPort": 3001,
+                    "hostPort": 3001,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-create-group": "true",
+                    "awslogs-group": "/ecs/test-be",
+                    "awslogs-region": "ap-southeast-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            }
+        }
+    ],
+    "taskRoleArn": "arn:aws:iam::727816232662:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::727816232662:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "2048",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
