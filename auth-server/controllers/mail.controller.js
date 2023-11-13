@@ -13,10 +13,10 @@ AWS.config.update({ region: "ap-southeast-1" });
 async function sendMail2(req, res) {
     try {
         const mailStatus = await sendMail(req.body); // Await the promise
-        res.status(200).send("Email sent successfully");
+        return res.status(200).send("Email sent successfully");
     } catch (error) {
         console.error("Error sending email:", error);
-        res.status(400).send("Bad Request");
+        return res.status(400).send("Bad Request");
     }
 }
 

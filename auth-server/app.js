@@ -35,15 +35,15 @@ const initialiseUserRecords = (UserRecord) => {
         }
     }).users
 
-    if (process.env.NODE_ENV) {
-        // UserRecord.create({
-        //     sub: "testsub1",
-        //     email: "test@email.com",
-        //     first_name: "test",
-        //     last_name: "user",
-        //     status: "valid",
-        //     birthdate: "1999-9-9"
-        // })
+    if (process.env.NODE_ENV === "test") {
+        UserRecord.create({
+            sub: "testsub1",
+            email: "test@email.com",
+            first_name: "test",
+            last_name: "user",
+            status: "valid",
+            birthdate: "1999-9-9"
+        })
         return
     } 
     UserRecord.count().then(count=>{
