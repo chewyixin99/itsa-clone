@@ -477,13 +477,13 @@ resource "aws_ecs_task_definition" "tf-fargate-be" {
   }
   container_definitions = jsonencode([
     {
-      "name" : "docker-be",
+      "name" : "be",
       "image" : "727816232662.dkr.ecr.ap-southeast-1.amazonaws.com/be:latest",
       "cpu" : 0,
       "healthCheck" = {
         "command" = [
           "CMD-SHELL",
-          "curl -f http://localhost/ || exit 1",
+          "curl -f http://localhost:3001/health || exit 1",
         ]
         "interval" = 30
         "retries"  = 3
@@ -491,9 +491,9 @@ resource "aws_ecs_task_definition" "tf-fargate-be" {
       }
       "portMappings" : [
         {
-          "name" : "docker-be-80-tcp",
-          "containerPort" : 80,
-          "hostPort" : 80,
+          "name" : "be-3001-tcp",
+          "containerPort" : 3001,
+          "hostPort" : 3001,
           "protocol" : "tcp",
           "appProtocol" : "http"
         }
@@ -546,25 +546,25 @@ resource "aws_ecs_service" "tf-web-app" {
   }
 }
 # todo: uncomment if can find a way to fix
-# resource "aws_ecs_service" "tf-server-app" {
-#   name            = "tf-server-app"
-#   cluster         = aws_ecs_cluster.tf-ecs-cluster.id
-#   task_definition = aws_ecs_task_definition.tf-fargate-be.arn
-#   desired_count   = 2
-#   launch_type     = "FARGATE"
-#   network_configuration {
-#     security_groups = [aws_security_group.tf-BE-ECS-SG.id]
-#     subnets = [
-#       aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
-#     ]
-#     assign_public_ip = true
-#   }
-#   load_balancer {
-#     target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
-#     container_port   = 80
-#     container_name   = "docker-be"
-#   }
-# }
+resource "aws_ecs_service" "tf-server-app" {
+  name            = "tf-server-app"
+  cluster         = aws_ecs_cluster.tf-ecs-cluster.id
+  task_definition = aws_ecs_task_definition.tf-fargate-be.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+  network_configuration {
+    security_groups = [aws_security_group.tf-BE-ECS-SG.id]
+    subnets = [
+      aws_subnet.tf-public-subnet-1.id, aws_subnet.tf-public-subnet-2.id
+    ]
+    assign_public_ip = true
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.tf-be-alb-target-group.arn
+    container_port   = 3001
+    container_name   = "be"
+  }
+}
 # * Load balancer #################################################
 # * FE LB
 resource "aws_lb" "tf-fe-alb" {
@@ -620,6 +620,15 @@ resource "aws_lb_target_group" "tf-be-alb-target-group" {
   target_type = "ip"
   protocol    = "HTTP"
   vpc_id      = aws_vpc.tf-vpc-301.id
+  health_check {
+    enabled             = true
+    interval            = 30
+    path                = "/health" # Specify your health check URL here
+    port                = 3001
+    protocol            = "HTTP"
+    unhealthy_threshold = 2
+    timeout             = 5
+  }
 }
 resource "aws_lb_listener" "tf-be-alb-listener-to-ecs" {
   load_balancer_arn = aws_lb.tf-be-alb.arn
