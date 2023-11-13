@@ -29,59 +29,59 @@ describe("get /health", () => {
     });
 });
 
-// describe('POST /signup', () => {
-//   db.user.destroy({
-//     where: {
-//       email: 'test@email.com'
-//     }
-//   })
+describe('POST /signup', () => {
+  db.user.destroy({
+    where: {
+      email: 'test@email.com'
+    }
+  })
   
-//   it('Create a new user and return success message', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signup')
-//       .send({
-//         email: 'test@email.com',
-//         password: 'password123',
-//         first_name: 'John',
-//         last_name: 'Doe',
-//         // roles: ['user']
-//       });
+  it('Create a new user and return success message', async () => {
+    const response = await request(app)
+      .post('/oauth/signup')
+      .send({
+        email: 'test@email.com',
+        password: 'password123',
+        first_name: 'John',
+        last_name: 'Doe',
+        // roles: ['user']
+      });
 
-//       expect(response.statusCode).toBe(200);
-//       expect(response.body.message).toBe('User was registered successfully!');
-//   });
+      expect(response.statusCode).toBe(200);
+      expect(response.body.message).toBe('User was registered successfully!');
+  });
 
 
-//   it('Fail to create a new user and return error message due to account exist', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signup')
-//       .send({
-//         email: 'test@email.com',
-//         password: 'password123',
-//         first_name: 'John',
-//         last_name: 'Doe',
-//         roles: ['user']
-//       });
+  it('Fail to create a new user and return error message due to account exist', async () => {
+    const response = await request(app)
+      .post('/oauth/signup')
+      .send({
+        email: 'test@email.com',
+        password: 'password123',
+        first_name: 'John',
+        last_name: 'Doe',
+        roles: ['user']
+      });
 
-//       expect(response.statusCode).toBe(400);
-//       expect(response.body.message).toBe('Failed! Account already created!');
-//   });
+      expect(response.statusCode).toBe(400);
+      expect(response.body.message).toBe('Failed! Account already created!');
+  });
 
-//   it('Fail to create a new user due to non existed user', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signup')
-//       .send({
-//         email: 'test2@email.com',
-//         password: 'password123',
-//         first_name: 'John',
-//         last_name: 'Doe',
-//         roles: ['user']
-//       });
+  it('Fail to create a new user due to non existed user', async () => {
+    const response = await request(app)
+      .post('/oauth/signup')
+      .send({
+        email: 'test2@email.com',
+        password: 'password123',
+        first_name: 'John',
+        last_name: 'Doe',
+        roles: ['user']
+      });
 
-//       expect(response.statusCode).toBe(400);
-//       expect(response.body.message).toBe('Failed! Email not valid');
-//   });
-// });
+      expect(response.statusCode).toBe(400);
+      expect(response.body.message).toBe('Failed! Email not valid');
+  });
+});
 
 // describe('sendMail function', () => {
 //   beforeEach(() => {
