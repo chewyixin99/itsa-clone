@@ -291,30 +291,30 @@ resource "aws_security_group_rule" "tf-in_db-sg" {
   security_group_id        = aws_security_group.tf-DB-SG.id
   to_port                  = 3306
 }
-
 locals {
-  sg-ingress-all = toset([aws_security_group.tf-FE-ECS-SG.id])
-  sg-egress-all = toset([
-    aws_security_group.tf-DB-SG.id,
-    aws_security_group.tf-BE-ALB-SG.id,
-    aws_security_group.tf-BE-ECS-SG.id,
-    aws_security_group.tf-FE-ALB-SG.id,
-    aws_security_group.tf-FE-ECS-SG.id
-  ])
-  sg-http-ingress = toset([
-    aws_security_group.tf-BE-ALB-SG.id,
-    aws_security_group.tf-FE-ALB-SG.id,
-    aws_security_group.tf-FE-ECS-SG.id,
-    aws_security_group.tf-IGW-SG.id
-  ])
-  sg-https-ingress = toset([
-    aws_security_group.tf-BE-ALB-SG.id,
-    aws_security_group.tf-FE-ALB-SG.id,
-    aws_security_group.tf-IGW-SG.id
-  ])
-  sg-http-egress  = toset([])
-  sg-https-egress = toset([])
-
+  sg-ingress-all = {
+    tf-fe-ecs-sg-id = aws_security_group.tf-FE-ECS-SG.id
+  }
+  sg-egress-all = {
+    tf-db-sg     = aws_security_group.tf-DB-SG.id,
+    tf-be-alb-sg = aws_security_group.tf-BE-ALB-SG.id,
+    tf-be-ecs-sg = aws_security_group.tf-BE-ECS-SG.id,
+    tf-fe-alb-sg = aws_security_group.tf-FE-ALB-SG.id,
+    tf-fe-ecs-sg = aws_security_group.tf-FE-ECS-SG.id
+  }
+  sg-http-ingress = {
+    tf-be-alb-sg = aws_security_group.tf-BE-ALB-SG.id,
+    tf-fe-alb-sg = aws_security_group.tf-FE-ALB-SG.id,
+    tf-fe-ecs-sg = aws_security_group.tf-FE-ECS-SG.id,
+    tf-igw-sg    = aws_security_group.tf-IGW-SG.id
+  }
+  sg-https-ingress = {
+    tf-be-alb-sg = aws_security_group.tf-BE-ALB-SG.id,
+    tf-fe-alb-sg = aws_security_group.tf-FE-ALB-SG.id,
+    tf-igw-sg    = aws_security_group.tf-IGW-SG.id
+  }
+  sg-http-egress  = {}
+  sg-https-egress = {}
 }
 resource "aws_security_group_rule" "tf-ingress_all" {
   for_each          = local.sg-ingress-all
