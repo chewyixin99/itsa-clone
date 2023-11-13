@@ -44,6 +44,18 @@ const initialiseUserRecords = (UserRecord) => {
             status: "valid",
             birthdate: "1999-9-9"
         })
+
+        db.userValidate.create({
+            email: "demouser@example.com",
+            otp: bcrypt.hashSync('123456', 8),
+            status: 1    
+        })
+
+        db.userValidate.create({
+            email: "demoadmin@example.com",
+            otp: bcrypt.hashSync('123456', 8),
+            status: 1    
+        })
         return
     } 
     UserRecord.count().then(count=>{

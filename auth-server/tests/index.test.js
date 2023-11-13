@@ -30,12 +30,6 @@ describe("get /health", () => {
 });
 
 describe('POST /signup', () => {
-  db.user.destroy({
-    where: {
-      email: 'test@email.com'
-    }
-  })
-  
   it('Create a new user and return success message', async () => {
     const response = await request(app)
       .post('/oauth/signup')
@@ -83,159 +77,116 @@ describe('POST /signup', () => {
   });
 });
 
-// describe('sendMail function', () => {
-//   beforeEach(() => {
-//     sendEmailMock.mockClear();
+describe('sendMail function', () => {
+  beforeEach(() => {
+    sendEmailMock.mockClear();
 
-//     // Mock the implementation for successful email send
-//     sendEmailMock.mockImplementation((params, callback) => {
-//       callback(null, { MessageId: '1234' }); // Simulate a successful response
-//     });
-//   });
+    // Mock the implementation for successful email send
+    sendEmailMock.mockImplementation((params, callback) => {
+      callback(null, { MessageId: '1234' }); // Simulate a successful response
+    });
+  });
 
-//   it('should send an email successfully', async () => {
-//     // Await the sendMail function and check the resolved value
-//     await expect(sendMail({
-//       email: 'demouser@example.com',
-//       code: '123456',
-//       resetpw: false
-//     })).resolves.toEqual({ MessageId: '1234' }); // This should match the resolved value
+  it('should send an email successfully', async () => {
+    // Await the sendMail function and check the resolved value
+    await expect(sendMail({
+      email: 'demouser@example.com',
+      code: '123456',
+      resetpw: false
+    })).resolves.toEqual({ MessageId: '1234' }); // This should match the resolved value
 
-//     expect(sendEmailMock).toHaveBeenCalledTimes(1);
-//   });
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
 
-//   // it('should handle email sending failure', async () => {
-//   //   // Mock implementation for failed email send
-//   //   sendEmailMock.mockImplementationOnce((params, callback) => {
-//   //     callback(new Error('Sending failed'), null);
-//   //   });
+  it('should handle email sending failure', async () => {
+    // Mock implementation for failed email send
+    sendEmailMock.mockImplementationOnce((params, callback) => {
+      callback(new Error('Sending failed'), null);
+    });
 
-//   //   await expect(sendMail({
-//   //     email: 'test@example.com',
-//   //     code: '123456',
-//   //     resetpw: false
-//   //   })).rejects.toThrow('Sending failed');
+    await expect(sendMail({
+      email: 'test@example.com',
+      code: '123456',
+      resetpw: false
+    })).rejects.toThrow('Sending failed');
 
-//   //   expect(sendEmailMock).toHaveBeenCalledTimes(1);
-//   // });
-// });
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+});
 
-// describe('POST /signin', () => {
-//   it('should require an email and password', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signin')
-//       .send({ email: '', password: '' });
+describe('POST /signin', () => {
+  it('should require an email and password', async () => {
+    const response = await request(app)
+      .post('/oauth/signin')
+      .send({ email: '', password: '' });
 
-//     expect(response.status).toBe(400);
-//     expect(response.text).toContain('Please enter an email');
-//   });
+    expect(response.status).toBe(400);
+    expect(response.text).toContain('Please enter an email');
+  });
 
-//   it('should handle invalid username/password', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signin')
-//       .send({ email: 'nonexistent@example.com', password: 'password123' });
+  it('should handle invalid username/password', async () => {
+    const response = await request(app)
+      .post('/oauth/signin')
+      .send({ email: 'nonexistent@example.com', password: 'password123' });
 
-//     expect(response.status).toBe(400);
-//     expect(response.text).toContain('Invalid Username / Password');
-//   });
+    expect(response.status).toBe(400);
+    expect(response.text).toContain('Invalid Username / Password');
+  });
 
-//   it('should sign in user successfully with correct credentials', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signin')
-//       .send({ email: 'test@email.com', password: 'password123' });
+  it('should sign in user successfully with correct credentials', async () => {
+    const response = await request(app)
+      .post('/oauth/signin')
+      .send({ email: 'demouser@example.com', password: 'password' });
 
-//     expect(response.status).toBe(200);
-//   });
-// });
+    expect(response.status).toBe(200);
+  });
+});
 
-// describe('POST /signinotp', () => {
-//   db.user.create({
-//     sub: "testsub1",
-//     email: "test2@email.com",
-//     password: bcrypt.hashSync("password", 8),
-//     first_name: "Demo",
-//     last_name: "User",
-//     birthdate: "2010-10-10",
-//     status: "Pending",
-//   })
+describe('POST /signinotp', () => {  
+  it('Should fail OTP check', async () => {
+    const response = await request(app)
+      .post('/oauth/signinOtp')
+      .send({ email: 'demouser@example.com', code: '123455' });
 
-//   db.userValidate.destroy({
-//     where:{
-//       email: "test2@email.com"
-//     }
-//   })
-//   db.userValidate.create({
-//     email: "test2@email.com",
-//     otp: bcrypt.hashSync('123456', 8),
-//     status: 1    
-//   })
-  
-//   it('Should fail OTP check', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signinOtp')
-//       .send({ email: 'test2@email.com', code: '123455' });
+    expect(response.status).toBe(400);
+    expect(response.text).toContain('Invalid OTP, please try again');
+  });
 
-//     expect(response.status).toBe(400);
-//     expect(response.text).toContain('Invalid OTP, please try again');
-//   });
+  it('Should pass OTP check', async () => {
+    const response = await request(app)
+      .post('/oauth/signinOtp')
+      .send({ email: 'demouser@example.com', code: '123456' });
 
-//   it('Should pass OTP check', async () => {
-//     const response = await request(app)
-//       .post('/oauth/signinOtp')
-//       .send({ email: 'test2@email.com', code: '123456' });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('accessToken');
+  });
+});
 
-//     expect(response.status).toBe(200);
-//     expect(response.body).toHaveProperty('accessToken');
-//   });
-// });
-
-// describe('GET /jwks', () => {
-//   it('Should GET JWKS stuff', async () => {
-//     const response = await request(app)
-//       .get('/oauth/jwks')
+describe('GET /jwks', () => {
+  it('Should GET JWKS stuff', async () => {
+    const response = await request(app)
+      .get('/oauth/jwks')
     
-//     expect(response.status).toBe(200);
-//     expect(response.body).toHaveProperty('keys');
-//   });
-// })
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('keys');
+  });
+})
 
-// describe('API with JWT credentials', () => {
-//   db.user.create({
-//     sub: "tester",
-//     email: "test5@email.com",
-//     password: bcrypt.hashSync("password", 8),
-//     first_name: "Demo",
-//     last_name: "User",
-//     birthdate: "2010-10-10",
-//     status: "Pending",
-//   })
-
-//   beforeEach(async() =>{ 
-//     db.userValidate.destroy({
-//       where:{
-//         email: "test5@email.com"
-//       }
-//     })
-  
-//     db.userValidate.create({
-//       email: "test5@email.com",
-//       otp: bcrypt.hashSync('123456', 8),
-//       status: 1    
-//     })
+describe('API with JWT credentials', () => {
+  beforeAll(async() =>{ 
+    const response = await request(app)
+      .post('/oauth/signinOtp')
+      .send({ email: 'demoadmin@example.com', code: '123456' });
     
-//     const response = await request(app)
-//       .post('/oauth/signinOtp')
-//       .send({ email: 'test5@email.com', code: '123456' });
-    
-//     accessToken = response.body.accessToken
-//   })
+    accessToken = response.body.accessToken
+  })
 
-//   it('/GET getUserInfo', async () => {
-//     const response = await request(app)
-//       .get('/user/userinfo')
-//       .set('Authorization', `Bearer ${accessToken}`);
+  it('/GET getUserInfo', async () => {
+    const response = await request(app)
+      .get('/user/userinfo')
+      .set('Authorization', `Bearer ${accessToken}`);
 
-//     expect(response.status).toBe(200);
-//     expect(response.body).toHaveProperty('sub');
-//   });
-// })
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('sub');
+  });
+})
