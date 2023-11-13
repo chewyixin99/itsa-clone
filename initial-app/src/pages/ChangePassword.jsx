@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   passwordWithLength,
@@ -6,31 +6,36 @@ import {
   passwordWithSymbol,
   passwordWithUppercaseAndLowercase,
 } from "../lib/loginUtil";
-import axios from "axios";
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
+import axios from 'axios';
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
 
-const ResetPassword = () => {
+const ChangePassword = () => {
   const navigate = useNavigate();
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
 
+  useEffect(()=>{
+    if (!localStorage.getItem("user")) {
+      return navigate("/login");
+    }
+  })
+
+  const onCurrentPasswordChange = (e) => {
+    setCurrentPassword(e.target.value);
+  };
   const onNewPasswordChange = (e) => {
     setNewPassword(e.target.value);
   };
   const onConfirmPasswordChange = (e) => {
     setConfirmPassword(e.target.value);
   };
-  const onEmailChange = (e) => {
-    setEmail(e.target.value);
-  };
   const onSubmitClick = async (e) => {
     e.preventDefault();
     let tmpErrorMsg = [];
-
+    // todo: password validation to check both are the same values
     if (newPassword !== confirmPassword) {
       tmpErrorMsg.push("Passwords do not match");
     } else {
@@ -50,30 +55,34 @@ const ResetPassword = () => {
       }
     }
     if (tmpErrorMsg.length === 0) {
-      setErrorMsg([])
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      try {
-        const response = await axios.post(`${BE_URL}/oauth/resetpassword`, {
-          email: email,
-          token: token,
-          newpassword: newPassword,
-          confirmpassword: confirmPassword
-        });
-  
-        console.log(response)
-        if (response.status === 200){
-          setSuccessMsg("Password resetted successfully")
-          setTimeout(() => {
-            return navigate("/login")
-          }, 1500);
-        }
-      } catch (error) {
-        if (error.response.status === 401) {
+      // success
+      setLoading(true);
+
+      // Prompt for OTP code
+      // Get auth type, prompted for OTP
+      const data = JSON.parse(localStorage.getItem("user"));
+      const token = data.accessToken || data.access_token;
+      const config = {
+        headers: { Authorization: `Bearer ${token}` },
+      };
+
+      const pwObj = {
+        currentPassword: currentPassword,
+        newPassword: newPassword
+      }
+
+      sessionStorage.setItem("page", "changepw")
+      sessionStorage.setItem("pwObject", JSON.stringify(pwObj))
+      try{
+        const authTypeData = await axios.post(`${BE_URL}/oauth/userauthtype`, {}, config);
+        (authTypeData.data.auth === "email") ? navigate("/otp") : navigate("/qr") 
+      } catch (e){
+        if (e.response.status === 401) {
           return navigate("/login");
         }
-        setLoading(false)
-        setErrorMsg(["Password update failed, please try again"])
+        setErrorMsg("Error, unable to fetch data");
+        setLoading(false);
+        navigate("/user-profile");
       }
     } else {
       setErrorMsg(tmpErrorMsg);
@@ -85,17 +94,17 @@ const ResetPassword = () => {
     <div className="flex h-[90vh] my-auto mx-auto justify-center items-center bg-gray-50">
       <div className="border rounded-md min-w-[50vh] bg-white">
         <h2 className="p-5 bg-[#0f385c] rounded-t-md text-white">
-          Reset password
+          Change password
         </h2>
         <hr />
         <form className="pt-5 p-3">
-          <div>Email</div>
+          <div>Current password</div>
           <input
-            onChange={onEmailChange}
-            value={email}
-            type="email"
+            onChange={onCurrentPasswordChange}
+            value={currentPassword}
+            type="password"
             className="custom-form-field"
-            placeholder="email"
+            placeholder="current password"
           />
           <div>New password</div>
           <input
@@ -105,7 +114,7 @@ const ResetPassword = () => {
             className="custom-form-field"
             placeholder="new password"
           />
-          <div>Confirm password</div>
+          <div>Confirm New password</div>
           <input
             onChange={onConfirmPasswordChange}
             value={confirmPassword}
@@ -118,7 +127,6 @@ const ResetPassword = () => {
               return <div key={r}>{r}</div>;
             })}
           </div>
-          <div className="mb-5 text-center text-green-500">{successMsg}</div>
           <div className="text-right">
             <button
               onClick={onSubmitClick}
@@ -135,4 +143,4 @@ const ResetPassword = () => {
   );
 };
 
-export default ResetPassword;
+export default ChangePassword;

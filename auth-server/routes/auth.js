@@ -19,14 +19,30 @@ router.post("/signinOtp", controller.signinOtp);
 
 router.post("/validateqr", controller.validateQR);
 
-router.post("/qr", controller.generateQR);
+router.post("/qr", authJwt.verifyToken, controller.generateQR);
 
-router.post("/jwks", controller.jwks);
+router.get("/jwks", controller.jwks);
 
 router.delete("/deleteaccount", authJwt.verifyToken, controller.deleteAccount);
 
 router.post("/tokenExchange", controller.tokenExchange)
 
-router.get("/userinfo", controller.userInfo)
+router.get("/userinfo", authJwt.verifyToken, controller.userInfo)
+
+router.get("/userauthtype", authJwt.verifyToken, controller.userAuthType)
+
+router.post("/userauthtype", authJwt.verifyToken, controller.userAuthTypeOTP)
+
+router.get("/checkgauth", authJwt.verifyToken, controller.checkGAuth)
+
+router.put("/authmethod", authJwt.verifyToken, controller.updateAuthMethod)
+
+router.put("/password", authJwt.verifyToken, controller.changePassword)
+
+router.post("/forgetpassword", controller.forgetPassword)
+
+router.post("/resetpassword", controller.resetPassword)
+
+router.post("/sendotp", controller.sendOTP)
 
 module.exports = router;

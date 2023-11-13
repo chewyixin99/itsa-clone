@@ -4,13 +4,17 @@ import { FiExternalLink } from "react-icons/fi";
 import axios from 'axios';
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
-
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`
+let counter = 0
 const Login = ({ login }) => {
   useEffect(() => {
-    // alert("OTP is 123456"); 
-    if (localStorage.getItem("user")) {
+    // alert("OTP is 123456");
+    sessionStorage.clear()
+    if (localStorage.getItem("user") && counter === 0) {
+      counter += 1
       navigate("/user-profile")
+    } else if (counter > 0){
+      localStorage.clear()
     }
   }, []);
   const navigate = useNavigate();
@@ -18,9 +22,14 @@ const Login = ({ login }) => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
 
   const onLoginClick = async (e) => {
     e.preventDefault();
+    if (!isCheckboxChecked) {
+      setErrorMsg("Permission is required to fetch your personal information");
+      return;
+    }
 
     // Call BE API
     if (username && password) {
@@ -37,6 +46,7 @@ const Login = ({ login }) => {
         }
         
         localStorage.setItem("username", username)
+
         if(response.data.type === 1) {
           // OTP via email
           setLoading(false);
@@ -61,6 +71,10 @@ const Login = ({ login }) => {
     }
   };
 
+  const onCheckboxChange = (e) => {
+    setIsCheckboxChecked(e.target.checked);
+  };
+  
   const onRegisterClick = async (e) => {
     e.preventDefault();
 
@@ -109,6 +123,18 @@ const Login = ({ login }) => {
             className="custom-form-field"
             placeholder="password"
           />
+          <div className="flex items-center mb-3">
+          <input
+            id="bank-data-permission-checkbox"
+            type="checkbox"
+            checked={isCheckboxChecked}
+            onChange={onCheckboxChange}
+            className="mr-2"
+          />
+          <label htmlFor="bank-data-permission-checkbox" className="custom-darkgray-text">
+            Allow this app fetch my personal information
+          </label>
+        </div>
           <div className="custom-gray-text mb-3">
             Forgot your password? Click{" "}
             <Link className="custom-basic-link" to="/reset-password-email">

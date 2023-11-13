@@ -2,10 +2,10 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { validateOTP } from "../lib/loginUtil";
-import axios from 'axios';
+import axios from "axios";
 
 // To be shifted out
-const BE_URL = `${import.meta.env.VITE_BACKEND_URL}:${import.meta.env.VITE_BACKEND_PORT}`
+const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
 
 const OTPVerification = ({ login }) => {
   const navigate = useNavigate();
@@ -13,27 +13,29 @@ const OTPVerification = ({ login }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [email, setEmail] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  const username = localStorage.getItem("username") 
+  const username = localStorage.getItem("username");
 
   useEffect(() => {
-    // alert("OTP is 123456"); 
-    setEmail(maskEmail(username))
+    // alert("OTP is 123456");
+    setEmail(maskEmail(username));
   }, []);
 
   function maskEmail(email) {
-    if (typeof email !== 'string') {
-      return ""; 
+    if (typeof email !== "string") {
+      return "";
     }
-  
-    const parts = email.split('@');
+
+    const parts = email.split("@");
     if (parts.length !== 2) {
-      return ""; 
+      return "";
     }
 
     const [prefix, suffix] = parts;
-    const newPrefix = '*'.repeat(Math.max(0, prefix.length - 3)) + prefix.slice(-3);
-    return newPrefix + '@' + suffix;
+    const newPrefix =
+      "*".repeat(Math.max(0, prefix.length - 3)) + prefix.slice(-3);
+    return newPrefix + "@" + suffix;
   }
 
   const handleInput = async (e) => {
@@ -66,50 +68,82 @@ const OTPVerification = ({ login }) => {
       }
       if (idx === tmpInput.length - 1 && tmpInput[idx] !== "") {
         const otp = tmpInput.join("");
-        try{
+        try {
           setLoading(true);
-          const response = await axios.post(`${BE_URL}/oauth/signinOtp`, { email: username, code: otp })
-          if (response.status === 200){
-            setLoading(false);
-            localStorage.setItem("user", JSON.stringify(response.data))
-            localStorage.removeItem("username")
-            login()
-            navigate("/home", {
-              replace: true,
-            });
+          const response = await axios.post(`${BE_URL}/oauth/signinOtp`, {
+            email: username,
+            code: otp,
+          });
+
+          if (response.status === 200) {
+            if (sessionStorage.getItem("page") === "changepw") {
+              // submit changepw request
+              const data = JSON.parse(localStorage.getItem("user"));
+              const token = data.accessToken || data.access_token;
+              const config = {
+                headers: { Authorization: `Bearer ${token}` },
+              };
+
+              try {
+                const pwData = JSON.parse(sessionStorage.getItem("pwObject"));
+                const changePW = await axios.put(
+                  `${BE_URL}/oauth/password`,
+                  pwData,
+                  config
+                );
+
+                changePW.status === 200
+                  ? setSuccessMsg("Password updated successfully")
+                  : setErrorMsg("Error, unable to update password");
+                sessionStorage.clear();
+                setTimeout(() => {
+                  navigate("/user-profile");
+                }, 1000);
+              } catch (e) {
+                if (e.response.status === 401) {
+                  return navigate("/login");
+                }
+                sessionStorage.clear()
+                setErrorMsg("Error, unable update password ");
+                setLoading(false);
+                setTimeout(() => {
+                  navigate("/user-profile");
+                }, 2000);
+              }
+            } else {
+              // login
+              setLoading(false);
+              localStorage.setItem("user", JSON.stringify(response.data));
+              login();
+              navigate("/user-profile", {
+                replace: true,
+              });
+            }
           } else {
             setLoading(false);
+            setSuccessMsg("");
             setErrorMsg("Invalid OTP");
           }
         } catch (error) {
+          setSuccessMsg("");
           setErrorMsg("Invalid OTP, try again");
+          setLoading(false);
         }
-
-        // const validOtp = validateOTP(otp);
-        // if (validOtp) {
-        //   setLoading(true);
-        //   setTimeout(() => {
-        //     setLoading(false);
-        //     navigate("/home", {
-        //       replace: true,
-        //     });
-        //   }, 1000);
-        // } else {
-        //   setErrorMsg("Invalid OTP, try again (otp hardcoded: 123456)");
-        // }
       }
       setInput(tmpInput);
     }
   };
 
-  const onResendClick = (e) => {
-    setInput(["", "", "", "", "", ""]);
-    setLoading(true);
-    // resend logic
-    setTimeout(() => {
-      setLoading(false);
-      alert("OTP is 123456");
-    }, 1000);
+  const onResendClick = async (e) => {
+    e.preventDefault();
+    if (!username){
+      return navigate("/login")
+    }
+
+    const response = await axios.post(`${BE_URL}/oauth/sendotp`, { email: username })
+    if(response.status === 200){
+      setSuccessMsg("OTP send")
+    }
   };
 
   return (
@@ -174,6 +208,7 @@ const OTPVerification = ({ login }) => {
           />
         </div>
         <div className="text-center mb-5 text-red-500">{errorMsg}</div>
+        <div className="text-center mb-5 text-green-500">{successMsg}</div>
         <div className="mb-5 text-center">
           <button
             className={`p-3 mx-2 ${

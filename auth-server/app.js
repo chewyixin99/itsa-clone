@@ -8,7 +8,6 @@ const Op = db.Sequelize.Op;
 var bcrypt = require("bcryptjs");
 const { config, createDatabaseIfNotExists } = require("./models/setup")
 
-
 const corsOptions = {
     origin: process.env.ORIGIN
     // origin: "*"
@@ -36,7 +35,31 @@ const initialiseUserRecords = (UserRecord) => {
         }
     }).users
 
+    if (process.env.NODE_ENV === "test") {
+        UserRecord.create({
+            sub: "testsub1",
+            email: "test@email.com",
+            first_name: "test",
+            last_name: "user",
+            status: "valid",
+            birthdate: "1999-9-9"
+        })
+
+        db.userValidate.create({
+            email: "demouser@example.com",
+            otp: bcrypt.hashSync('123456', 8),
+            status: 1    
+        })
+
+        db.userValidate.create({
+            email: "demoadmin@example.com",
+            otp: bcrypt.hashSync('123456', 8),
+            status: 1    
+        })
+        return
+    } 
     UserRecord.count().then(count=>{
+
         if (count <= 0){
             userRecords.map((record) => {
                 // console.log((record.F.getMonth()))
@@ -75,9 +98,9 @@ const initialiseRoles = (Role) => {
     });
 
     Role.findOrCreate({
-        where: { id: 2 },
+        where: { id: 3 },
         defaults: {
-            id: 2, name: "admin"
+            id: 3, name: "admin"
         },
     }).then(([role, created]) => {
         if (created) {
@@ -89,9 +112,9 @@ const initialiseRoles = (Role) => {
         console.error('Error:', error);
     });
     Role.findOrCreate({
-        where: { id: 3 },
+        where: { id: 2 },
         defaults: {
-            id: 3, name: "moderator"
+            id: 2, name: "moderator"
         },
     }).then(([role, created]) => {
         if (created) {
@@ -120,13 +143,13 @@ const initialiseDemoUsers = async (User, Role) => {
         }
     })
     if (!user1) {
-        User.create({
+        await User.create({
             sub: "testsub1",
             email: "demouser@example.com",
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "User",
-            birthdate: "10/10/10",
+            birthdate: "2010-10-10",
             status: "valid",
         }).then((user) => {
             // user role = 1
@@ -135,13 +158,13 @@ const initialiseDemoUsers = async (User, Role) => {
         });
     }
     if (!user2) {
-        User.create({
+        await User.create({
             sub: "testsub2",
             email: "demomod@example.com",
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "Moderator",
-            birthdate: "11/11/11",
+            birthdate: "2011-11-11",
             status: "valid",
         }).then((user) => {
             // user role = 1
@@ -150,13 +173,13 @@ const initialiseDemoUsers = async (User, Role) => {
         });
     }
     if (!user3) {
-        User.create({
+        await User.create({
             sub: "testsub3",
             email: "demoadmin@example.com",
             password: bcrypt.hashSync("password", 8),
             first_name: "Demo",
             last_name: "Admin",
-            birthdate: "12/12/12",
+            birthdate: "2012-12-12",
             status: "valid",
         }).then((user) => {
             // user role = 1
@@ -215,11 +238,10 @@ const initialiseAuthType = (AuthType) => {
 const init = async () => {
     await createDatabaseIfNotExists(config)
     await db.sequelize.sync()
-    initialiseRoles(db.role)
-    initialiseUserRecords(db.userRecord)
-    initialiseAuthType(db.authType)
-    initialiseDemoUsers(db.user, db.role)
+    await Promise.all([initialiseRoles(db.role),
+    initialiseUserRecords(db.userRecord),
+    initialiseAuthType(db.authType),
+    initialiseDemoUsers(db.user, db.role)])
 }
-
 module.exports = { app, init }
 

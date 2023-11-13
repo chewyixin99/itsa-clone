@@ -2,7 +2,9 @@ const jwt = require("jsonwebtoken");
 const db = require("../models");
 const fs = require("fs");
 
-const publicKey = fs.readFileSync('public.key', 'utf8');
+// const publicKey = fs.readFileSync('public.key', 'utf8');
+const publicKey = fs.readFileSync('cert.pem', 'utf8'); 
+const ssoPublicKey = fs.readFileSync('keys/sso_public_key.pem', 'utf8');
 const User = db.user;
 verifyToken = (req, res, next) => {
     let tokenHeader = req.headers.authorization;
@@ -12,6 +14,7 @@ verifyToken = (req, res, next) => {
             message: "No token provided!"
         });
     }
+
     let token = tokenHeader.substring(7, tokenHeader.length)
     jwt.verify(token,
         publicKey,
@@ -20,70 +23,49 @@ verifyToken = (req, res, next) => {
             // return res.status()
             // }
             if (err) {
-                return res.status(401).send({
-                    message: "Unauthorized!",
-                });
+                jwt.verify(token, ssoPublicKey, (err2, decoded2) => {
+                    if (err2) {
+                        return res.status(401).send({
+                            message: "Unauthorized!",
+                        });
+                    }
+                    console.log(decoded2)
+                    req.userId = decoded2.user.id;
+                    req.roles = decoded2.user.roles;
+                    next();
+                    return
+                })
+            } else {
+                req.userId = decoded.user.id;
+                req.roles = decoded.user.roles;
+                next();
             }
-            req.userId = decoded.id;
-            next();
+
         });
 };
 
 isAdmin = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "admin") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Admin Role!"
-            });
-            return;
-        });
-    });
+    const { roles } = req;
+    if (['admin'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 isModerator = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "moderator") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Moderator Role!"
-            });
-        });
-    });
+    const { roles } = req;
+    if (['moderator'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 isModeratorOrAdmin = (req, res, next) => {
-    User.findByPk(req.userId).then(user => {
-        user.getRoles().then(roles => {
-            for (let i = 0; i < roles.length; i++) {
-                if (roles[i].name === "moderator") {
-                    next();
-                    return;
-                }
-
-                if (roles[i].name === "admin") {
-                    next();
-                    return;
-                }
-            }
-
-            res.status(403).send({
-                message: "Require Moderator or Admin Role!"
-            });
-        });
-    });
+    const { roles } = req;
+    if (['admin', 'moderator'].some(role => roles.includes(role))) {
+        next();
+        return;
+    }
 };
 
 const authJwt = {

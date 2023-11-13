@@ -9,7 +9,7 @@ const Logout = ({ logout }) => {
     localStorage.removeItem("user");
     localStorage.removeItem("sso");
     logout();
-    navigate("/login");
+    return navigate("/login");
   }, []);
 }
 
