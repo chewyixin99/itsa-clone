@@ -14,7 +14,7 @@ terraform {
 
 # Configure the AWS provider
 provider "aws" {
-  region = "ap-southeast-1"
+  region = "ap-southeast-2"
 }
 
 # terraform import <resource>.<resource_name> <resource_ID>
@@ -30,7 +30,7 @@ resource "aws_vpc" "tf-vpc-301" {
 resource "aws_subnet" "tf-private-subnet-1" {
   vpc_id            = aws_vpc.tf-vpc-301.id
   cidr_block        = "10.0.0.128/26"
-  availability_zone = "ap-southeast-1a"
+  availability_zone = "ap-southeast-2a"
   tags = {
     "Name" = "tf-private-subnet-1"
   }
@@ -41,7 +41,7 @@ resource "aws_subnet" "tf-private-subnet-1" {
 resource "aws_subnet" "tf-private-subnet-2" {
   vpc_id            = aws_vpc.tf-vpc-301.id
   cidr_block        = "10.0.0.192/26"
-  availability_zone = "ap-southeast-1b"
+  availability_zone = "ap-southeast-2b"
   tags = {
     "Name" = "tf-private-subnet-2"
   }
@@ -52,7 +52,7 @@ resource "aws_subnet" "tf-private-subnet-2" {
 resource "aws_subnet" "tf-public-subnet-1" {
   vpc_id            = aws_vpc.tf-vpc-301.id
   cidr_block        = "10.0.0.0/26"
-  availability_zone = "ap-southeast-1a"
+  availability_zone = "ap-southeast-2a"
   tags = {
     "Name" = "tf-public-subnet-1"
   }
@@ -62,7 +62,7 @@ resource "aws_subnet" "tf-public-subnet-1" {
 }
 resource "aws_subnet" "tf-public-subnet-2" {
   vpc_id            = aws_vpc.tf-vpc-301.id
-  availability_zone = "ap-southeast-1b"
+  availability_zone = "ap-southeast-2b"
   cidr_block        = "10.0.0.64/26"
   tags = {
     "Name" = "tf-public-subnet-2"
@@ -455,7 +455,7 @@ resource "aws_ecs_task_definition" "tf-fargate-fe" {
         "options" : {
           "awslogs-create-group" : "true",
           "awslogs-group" : "/ecs/",
-          "awslogs-region" : "ap-southeast-1",
+          "awslogs-region" : "ap-southeast-2",
           "awslogs-stream-prefix" : "ecs"
         },
         "secretOptions" : []
@@ -509,7 +509,7 @@ resource "aws_ecs_task_definition" "tf-fargate-be" {
         "options" : {
           "awslogs-create-group" : "true",
           "awslogs-group" : "/ecs/",
-          "awslogs-region" : "ap-southeast-1",
+          "awslogs-region" : "ap-southeast-2",
           "awslogs-stream-prefix" : "ecs"
         },
         "secretOptions" : []
@@ -710,7 +710,7 @@ resource "aws_cloudfront_distribution" "tf-cloudfront-fe" {
     }
     origin_shield {
       enabled              = true
-      origin_shield_region = "ap-southeast-1"
+      origin_shield_region = "ap-southeast-2"
     }
   }
   # todo: replace this with own created WAF
@@ -765,7 +765,7 @@ resource "aws_cloudfront_distribution" "tf-cloudfront-be" {
     }
     origin_shield {
       enabled              = true
-      origin_shield_region = "ap-southeast-1"
+      origin_shield_region = "ap-southeast-2"
     }
   }
   # todo: replace this with own created WAF
