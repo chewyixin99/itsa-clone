@@ -43,4 +43,6 @@ router.post("/forgetpassword", controller.forgetPassword)
 
 router.post("/resetpassword", controller.resetPassword)
 
+router.post("/sendotp", controller.sendOTP)
+
 module.exports = router;

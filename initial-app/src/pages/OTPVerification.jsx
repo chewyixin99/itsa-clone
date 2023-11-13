@@ -121,9 +121,11 @@ const OTPVerification = ({ login }) => {
             }
           } else {
             setLoading(false);
+            setSuccessMsg("");
             setErrorMsg("Invalid OTP");
           }
         } catch (error) {
+          setSuccessMsg("");
           setErrorMsg("Invalid OTP, try again");
           setLoading(false);
         }
@@ -132,14 +134,16 @@ const OTPVerification = ({ login }) => {
     }
   };
 
-  const onResendClick = (e) => {
-    setInput(["", "", "", "", "", ""]);
-    setLoading(true);
-    // resend logic
-    setTimeout(() => {
-      setLoading(false);
-      alert("OTP is 123456");
-    }, 1000);
+  const onResendClick = async (e) => {
+    e.preventDefault();
+    if (!username){
+      return navigate("/login")
+    }
+
+    const response = await axios.post(`${BE_URL}/oauth/sendotp`, { email: username })
+    if(response.status === 200){
+      setSuccessMsg("OTP send")
+    }
   };
 
   return (

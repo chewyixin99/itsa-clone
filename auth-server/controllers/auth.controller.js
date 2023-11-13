@@ -878,3 +878,58 @@ exports.resetPassword = async (req, res) => {
 
   return res.status(200).send({ message: "Password has been resetted" })
 };
+
+
+exports.sendOTP = async (req, res) => {
+  const { email  } = req.body;
+
+  if (!email || email === "") {
+    res.status(400).send("No email");
+    return;
+  }
+
+  const user = await User.findOne({
+    where: {
+      email: email,
+    },
+  });
+
+  if (!user) {
+    res.status(400).send("Invalid User");
+    return;
+  }
+
+  const otpCode = generateOTP();
+  try {
+    // Find the record based on a unique identifier (e.g., primary key)
+    const [record, created] = await UserValidate.findOrCreate({
+      where: { email: email },
+      defaults: { email: email, otp: bcrypt.hashSync(otpCode, 8), status: 1 },
+    });
+
+    if (created) {
+      // console.log("New record created:", record.toJSON());
+    } else {
+      const updatedRecord = await record.update({
+        email: email,
+        otp: bcrypt.hashSync(otpCode, 8),
+        status: 1,
+      });
+      // console.log("Existing record updated:", record.toJSON());
+    }
+
+    if (record) {
+      data = {
+        email: email,
+        code: otpCode,
+      };
+
+      // Async call to email, if fail then call again
+      await sendMail(data);
+      res.send({ type: 1, message: "Please enter OTP" });
+    }
+  } catch (error) {
+    res.status(500);
+    res.send(error);
+  }
+};
