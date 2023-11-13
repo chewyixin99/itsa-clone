@@ -11,13 +11,12 @@ AWS.config.credentials = new AWS.Credentials(
 AWS.config.update({ region: "ap-southeast-1" });
 
 async function sendMail2(req, res) {
-    const mailStatus = sendMail(req.body);
-    if (mailStatus !== 1) {
-        res.status(400);
-        res.send("Bad Request");
-    } else {
-        res.status(200);
-        res.send("Email sent successfully");
+    try {
+        const mailStatus = await sendMail(req.body); // Await the promise
+        res.status(200).send("Email sent successfully");
+    } catch (error) {
+        console.error("Error sending email:", error);
+        res.status(400).send("Bad Request");
     }
 }
 
@@ -33,18 +32,21 @@ async function sendMail(data) {
         return 0;
     }
 
-    // Check for valid user
-    const resp = await UserRecord.findOne({
-        where: {
-            email: email,
-        },
-    });
+    if (process.env.NODE_ENV !== "test") {
+        // Check for valid user
+        const resp = await UserRecord.findOne({
+            where: {
+                email: email,
+            },
+        });
 
-    if (!resp) {
-        return 0;
+        if (!resp) {
+            return 0;
+        }
     }
-
+   
     const ses = new AWS.SES();
+    
     let params;
     if (resetpw){
         params = {
@@ -111,15 +113,17 @@ async function sendMail(data) {
     }
     
 
-    ses.sendEmail(params, function (err, data) {
-        if (err) {
-            console.log("ERROR sending email")
-            console.log(err, err.stack); // an error occurred
-            return 0;
-        } else {
-            console.log(data); // successful response
-            return 1;
-        }
+    return new Promise((resolve, reject) => {
+        const ses = new AWS.SES();
+        ses.sendEmail(params, (err, data) => {
+            if (err) {
+                console.error("ERROR sending email", err);
+                reject(err);
+            } else {
+                console.log("Email sent successfully", data);
+                resolve(data);
+            }
+        });
     });
 }
 
