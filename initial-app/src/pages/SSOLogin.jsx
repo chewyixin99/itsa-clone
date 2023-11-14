@@ -21,6 +21,7 @@ const SSOLogin = ({ login }) => {
 
           if (response.status === 200) {
             // const accessToken = response.data.access_token;
+            response.data.roles = ["user"]
             localStorage.setItem("user", JSON.stringify(response.data))
             localStorage.setItem("sso", true)
             login()
