@@ -81,6 +81,7 @@ $ npm run preview
 ```
 
 **Login Credentials (Testing purpose)**
+```
 Administrator:
 email: demoadmin@example.com
 password: password
@@ -92,7 +93,7 @@ password: password
 User:
 email: demouser@example.com
 password: password
-
+```
 
 ## Steps to deploy in another region (using Terraform)
 
