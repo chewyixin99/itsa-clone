@@ -70,6 +70,7 @@ const UserProfile = () => {
     try {
       if (localStorage.getItem("sso")) {
         userInfoResponse = await axios.get(`${BE_URL}/oauth/userinfo`, config);
+        data.roles = ["user"]
       } else {
         userInfoResponse = await axios.get(`${BE_URL}/user/userinfo`, config);
       }
