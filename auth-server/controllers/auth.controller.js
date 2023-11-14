@@ -109,9 +109,9 @@ exports.tokenExchange = async (req, res) => {
   }
 
   try {
-    const clientId = "mDQuoTihIwUmrhi5_r1pvNGzp8NmBhoI7UDGWEbxGuw";
-    const clientSecret = "fJNSPWx-YWnLhrYIapsH2Mc4AwtwDNeKVvl4zdmFsYA";
-    const redirectUri = "http://localhost:5173/sso-login";
+    const clientId = process.env.SSO_CLIENTID;
+    const clientSecret = process.env.SSO_SECRET;
+    const redirectUri = process.env.SSO_REDIRECT;
     // get access token
     const response = await axios.post(
       "https://smurnauth-production.fly.dev/oauth/token",

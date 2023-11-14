@@ -8,8 +8,8 @@ const UserProfile = () => {
   const [userRoles, setUserRoles] = useState([]);
   const [isEditing, setIsEditing] = useState(false); // Edit mode state
   const [editedUserInfo, setEditedUserInfo] = useState({}); // Store edited user info
-  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}` 
-  
+  const BE_URL = `${import.meta.env.VITE_BACKEND_URL}`;
+
   useEffect(() => {
     // alert("OTP is 123456");
     if (!localStorage.getItem("user")) {
@@ -51,7 +51,7 @@ const UserProfile = () => {
 
   const handleOTPVerificationMethod = () => {
     navigate("/otp-verification-method");
-  }
+  };
 
   const handleAuthorizeUserManagement = () => {
     if (userRoles.includes("admin") || userRoles.includes("moderator")) {
@@ -79,11 +79,10 @@ const UserProfile = () => {
         const respData = userInfoResponse.data;
         setUserInfo({ ...respData });
       }
-      
     } catch (error) {
       if (error.response.status === 401) {
         return navigate("/login", {
-          replace: true
+          replace: true,
         });
       }
     }
@@ -91,7 +90,7 @@ const UserProfile = () => {
 
   const capitalizeAndReplaceUnderscores = (key) => {
     return key
-      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/_/g, " ") // Replace underscores with spaces
       .replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1)); // Capitalize the first letter
   };
   const handleToggleEdit = () => {
@@ -114,16 +113,20 @@ const UserProfile = () => {
           "Content-Type": "application/json", // Set the content type to JSON
         },
       };
-      const {email, family_name, given_name} = editedUserInfo;
-      
-      const updateUserInfo =  {
+      const { email, family_name, given_name } = editedUserInfo;
+
+      const updateUserInfo = {
         email: email,
         first_name: given_name,
-        last_name: family_name
-      }
-      
+        last_name: family_name,
+      };
+
       // Send a PATCH request to update the user information
-      const response = await axios.patch(`${BE_URL}/user/userinfo`, updateUserInfo, config);
+      const response = await axios.patch(
+        `${BE_URL}/user/userinfo`,
+        updateUserInfo,
+        config
+      );
 
       if (response.status === 200) {
         // Update the userInfo state with the edited user information
@@ -139,7 +142,7 @@ const UserProfile = () => {
       // Handle any error conditions here
     }
   };
-  
+
   const handleCancelEdit = () => {
     // Exit edit mode
     setIsEditing(false);
@@ -150,16 +153,18 @@ const UserProfile = () => {
         <div>
           <h1 className="pt-1 pb-6">User Profile</h1>
           <div className="max-w-[50vw] bg-white">
-          {Object.entries(userInfo).map(([key, value]) => {
+            {Object.entries(userInfo).map(([key, value]) => {
               // Check if the key is "sub" or "email"
-              if (key === "sub" || key === "email" || key==="name") {
+              if (key === "sub" || key === "email" || key === "name") {
                 return (
                   <div
                     className="flex items-center justify-between border-2"
                     key={key}
                   >
                     <div className="font-semibold min-w-[10vw] border-r-2 p-3">
-                      { (key === "sub") ? "ID" : capitalizeAndReplaceUnderscores(key)}
+                      {key === "sub"
+                        ? "ID"
+                        : capitalizeAndReplaceUnderscores(key)}
                     </div>
                     <div className="min-w-[40vw] p-3">{value}</div>
                   </div>
@@ -176,7 +181,7 @@ const UserProfile = () => {
                   <div className="min-w-[40vw] p-3">
                     {isEditing ? (
                       <input
-                        className={`w-full ${isEditing ? 'editableInput': ''}`}
+                        className={`w-full ${isEditing ? "editableInput" : ""}`}
                         type="text"
                         value={editedUserInfo[key]}
                         onChange={(e) =>
@@ -195,18 +200,22 @@ const UserProfile = () => {
             })}
           </div>
           <div className="max-w-[50vw] flex justify-end items-center py-3">
-            <button
+            {!localStorage.getItem("sso") && (
+              <button
                 className={`p-3 mx-2 my-2 custom-button-primary`}
                 onClick={handleOTPVerificationMethod}
               >
                 OTP verification method
-            </button>
-            <button
+              </button>
+            )}
+            {!localStorage.getItem("sso") && (
+              <button
                 className={`p-3 mx-2 my-2 custom-button-primary`}
                 onClick={handleChangePassword}
               >
                 Change Password
-            </button>
+              </button>
+            )}
             {!localStorage.getItem("sso") && (
               <button
                 className={`p-3 mx-2 my-2 custom-button-secondary`}
@@ -223,9 +232,9 @@ const UserProfile = () => {
                 User Management
               </button>
             ) : null}
-            {userRoles.includes("admin") ||
+            {(userRoles.includes("admin") ||
             userRoles.includes("moderator") ||
-            userRoles.includes("user") ? (
+            userRoles.includes("user")) && !localStorage.getItem("sso") ? (
               <div>
                 {isEditing ? (
                   <button
@@ -257,5 +266,3 @@ const UserProfile = () => {
 };
 
 export default UserProfile;
-
-
