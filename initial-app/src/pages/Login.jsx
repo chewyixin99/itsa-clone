@@ -93,8 +93,8 @@ const Login = ({ login }) => {
 
   const onBankSSOLoginClick = (e) => {
     e.preventDefault();
-    const clientId = `${import.meta.env.SSO_CLIENTID}`; 
-    const redirectUri = `${import.meta.env.SSO_REDIRECT}`;
+    const clientId = `${import.meta.env.VITE_SSO_CLIENTID}`; 
+    const redirectUri = `${import.meta.env.VITE_SSO_REDIRECT}`;
     // const redirectUri = window.location.origin + "/sso-login";
 
     // Replace with the actual URL of the bank's OAuth 2.0 authorization endpoint
