@@ -80,6 +80,20 @@ $ npm run build
 $ npm run preview
 ```
 
+**Login Credentials (Testing purpose)**
+Administrator:
+email: demoadmin@example.com
+password: password
+
+Moderator:
+email: demomod@example.com
+password: password
+
+User:
+email: demouser@example.com
+password: password
+
+
 ## Steps to deploy in another region (using Terraform)
 
 Establish two additional Amazon Elastic Container Registry (ECR) repositories in the alternate region—one for the front-end image and another for the back-end image. When configuring options, ensure Tag immutability is set to disabled and activate KMS encryption. Take note of the names assigned to the front-end and back-end ECR repositories, as they will be referenced in the subsequent Terraform script.
