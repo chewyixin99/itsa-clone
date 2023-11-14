@@ -32,8 +32,12 @@ $ export AWS_SECRET_ACCESS_KEY=xxx
 
 #### Terraform commands (in order)
 
-- `$ terraform init` to initialise
+- `$ terraform init` to initialise terraform and connect to the cloud provider
 - `$ terraform fmt` to format files
 - `$ terraform plan` to gloss over changes made to make sure nothing will break
 - `$ terraform apply` to deploy on AWS
+- `$ terraform show` to show the current state of deployed resources
 - `$ terraform destroy` to terminate instances
+- `$ terraform destroy -target='<resource>.<name>'` to destroy specific instances
+- `$ terraform state list` to view all managed states
+- `$ terraform state rm <resource>.<name>` to remove state from tf state
